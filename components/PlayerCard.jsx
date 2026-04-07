@@ -15,7 +15,13 @@ function FormTag({ form }) {
   return null;
 }
 
-export default function PlayerCard({ player, selected, disabled, onToggle, ownership }) {
+const STATUS_BADGE = {
+  playing: { label: 'Playing', bg: '#16a34a', color: '#fff' },
+  impact:  { label: 'Impact Sub', bg: '#7c3aed', color: '#fff' },
+  bench:   { label: 'Not Playing', bg: '#374151', color: '#9ca3af' },
+};
+
+export default function PlayerCard({ player, selected, disabled, onToggle, ownership, playingStatus }) {
   const cr = CR[player.id] ?? 7;
   const tc = T[player.team];
   const roleColor = ROLE_COLORS[player.r] || '#818cf8';
@@ -39,6 +45,14 @@ export default function PlayerCard({ player, selected, disabled, onToggle, owner
           <span style={{ fontSize: 12, fontWeight: 600, color: '#eef0ff' }}>{player.n}</span>
           {player.c !== 'IN' && <span style={{ fontSize: 9, color: '#424960', marginLeft: 3 }}>[{player.c}]</span>}
           <FormTag form={player.form} />
+          {playingStatus && (() => {
+            const b = STATUS_BADGE[playingStatus];
+            return b ? (
+              <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 99, background: b.bg, color: b.color, fontWeight: 700, marginLeft: 4 }}>
+                {b.label}
+              </span>
+            ) : null;
+          })()}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
           <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 99, background: `${roleColor}18`, color: roleColor, border: `1px solid ${roleColor}30` }}>

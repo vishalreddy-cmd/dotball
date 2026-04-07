@@ -42,6 +42,7 @@ export default function XIPage() {
   const [saving,     setSaving]     = useState(false);
   const [ownership,  setOwnership]  = useState({}); // playerId -> pct
   const [showShare,  setShowShare]  = useState(false);
+  const [lineup,     setLineup]     = useState(null); // { [playerId]: 'playing'|'impact'|'bench' }
 
   /* Load any existing saved squad */
   useEffect(() => {
@@ -91,6 +92,28 @@ export default function XIPage() {
     }
     loadOwnership();
   }, [matchId]);
+
+  /* Poll playing XI lineup — starts 1h before match, refreshes every 60s */
+  useEffect(() => {
+    if (!match) return;
+    const matchTime = new Date(match.date).getTime();
+    const now = Date.now();
+    const oneHour = 60 * 60 * 1000;
+    // Only poll if within 1 hour of start or already live/past
+    if (match.status === 'upcoming' && matchTime - now > oneHour) return;
+
+    const fetchLineup = () =>
+      fetch(`/api/match-info?matchId=${matchId}`)
+        .then(r => r.json())
+        .then(d => { if (d.lineup) setLineup(d.lineup); })
+        .catch(() => {});
+
+    fetchLineup();
+    if (match.status === 'live') {
+      const id = setInterval(fetchLineup, 60_000);
+      return () => clearInterval(id);
+    }
+  }, [matchId, match]);
 
   if (!match) return <div style={{ padding: 20, color: '#7a85a0' }}>Match not found.</div>;
 
@@ -333,6 +356,20 @@ export default function XIPage() {
         </div>
       )}
 
+      {/* Lineup banner — shows after toss */}
+      {lineup && (
+        <div style={{ borderRadius: 9, padding: '7px 10px', background: '#0c1a10', border: '1px solid #16a34a33', marginBottom: 7, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ fontSize: 10, color: '#22c55e', fontWeight: 600 }}>
+            Toss done — Playing XI announced
+          </div>
+          <div style={{ display: 'flex', gap: 6, fontSize: 9, color: '#7a85a0' }}>
+            <span style={{ color: '#16a34a' }}>● Playing</span>
+            <span style={{ color: '#7c3aed' }}>● Impact Sub</span>
+            <span style={{ color: '#374151' }}>● Bench</span>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
       <div style={{ display: 'flex', gap: 5, marginBottom: 7 }}>
         {['ALL', match.t1, match.t2].map(v => (
@@ -360,7 +397,7 @@ export default function XIPage() {
           const tooManyTeam   = sel.filter(s => s.team === p.team).length >= 6;
           const full          = sel.length >= 11;
           const dis = !isSel && (full || tooExpensive || tooManyTeam);
-          return <PlayerCard key={p.id} player={p} selected={isSel} disabled={dis} onToggle={handleToggle} ownership={ownership[p.id]} />;
+          return <PlayerCard key={p.id} player={p} selected={isSel} disabled={dis} onToggle={handleToggle} ownership={ownership[p.id]} playingStatus={lineup?.[p.id]} />;
         })}
       </div>
 
