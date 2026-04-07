@@ -1,0 +1,1418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#6366f1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="dotball">
+<meta name="description" content="IPL 2026 fantasy with friends — no money, just cricket knowledge">
+<title>dotball</title>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#08090f;color:#eef0ff;overscroll-behavior:none}
+#app{height:100%;display:flex;flex-direction:column;max-width:430px;margin:0 auto;position:relative}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 10px;background:#08090f;border-bottom:1px solid #1c2035;flex-shrink:0;padding-top:max(12px,env(safe-area-inset-top))}
+.logo{font-size:19px;font-weight:900;color:#eef0ff;letter-spacing:-0.5px;display:flex;align-items:center;gap:7px}
+.logo-dot{width:9px;height:9px;border-radius:50%;background:#6366f1;flex-shrink:0}
+.live-pill{font-size:8px;padding:3px 8px;border-radius:99px;background:#22c55e18;color:#22c55e;border:1px solid #22c55e33;font-weight:600;display:flex;align-items:center;gap:4px}
+.content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:max(72px,calc(72px + env(safe-area-inset-bottom)))}
+.nav{display:flex;background:#08090f;border-top:1px solid #1c2035;flex-shrink:0;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 4px 6px;border:none;background:transparent;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}
+.nb.on::after{content:'';display:block;width:14px;height:2px;border-radius:99px;background:#6366f1;margin-top:1px}
+.ni{font-size:17px;line-height:1}.nl{font-size:8px;color:#424960}.nb.on .nl{color:#6366f1;font-weight:700}
+.bdg{position:absolute;top:5px;right:8px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:1.5px solid #08090f}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}.blink{animation:pulse 1.4s infinite}
+.av{width:32px;height:32px;border-radius:50%;border:2px solid #6366f133;overflow:hidden;cursor:pointer;flex-shrink:0;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+/* Cards */
+.card{background:#111421;border-radius:14px;border:1px solid #1c2035;overflow:hidden;margin-bottom:10px}
+.card.live{border-color:rgba(99,102,241,.4)}
+/* Inputs */
+input,select{font-family:inherit}
+input:focus,select:focus{outline:none}
+/* Modal backdrop */
+.backdrop{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:100;display:flex;align-items:flex-end}
+.sheet{width:100%;max-width:430px;margin:0 auto;background:#111421;border-radius:20px 20px 0 0;border:1px solid #1c2035;padding:6px 18px max(32px,calc(18px + env(safe-area-inset-bottom)));max-height:92vh;overflow-y:auto}
+.drag{width:36px;height:4px;border-radius:2px;background:#1c2035;margin:10px auto 14px}
+/* Toast */
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;padding:10px 20px;border-radius:99px;font-size:12px;font-weight:700;display:none;white-space:nowrap;pointer-events:none}
+/* Loading */
+#loading{position:fixed;inset:0;background:#08090f;display:flex;align-items:center;justify-content:center;z-index:999;flex-direction:column;gap:12px}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div style="font-size:28px;font-weight:900;color:#eef0ff;display:flex;align-items:center;gap:8px">
+    <div style="width:11px;height:11px;border-radius:50%;background:#6366f1"></div>dotball
+  </div>
+  <div style="font-size:12px;color:#424960">IPL 2026 fantasy</div>
+</div>
+
+<div id="toast"></div>
+<div id="app"></div>
+
+<!-- Firebase SDK (ESM via CDN) -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, doc, setDoc, getDoc, collection,
+  query, where, orderBy, onSnapshot, serverTimestamp,
+  getDocs, addDoc, updateDoc, arrayUnion
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged, updateProfile,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  sendPasswordResetEmail
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+/* ══════════════════════════════════════════
+   ⚙️  PASTE YOUR FIREBASE CONFIG HERE
+   Firebase Console → Project Settings → Your apps
+══════════════════════════════════════════ */
+const FB_CONFIG = {
+  apiKey:            "AIzaSyAWx28076A7YTeS6egBJr0HJPA4lvdfiE0",
+  authDomain:        "dotball-ce1f8.firebaseapp.com",
+  projectId:         "dotball-ce1f8",
+  storageBucket:     "dotball-ce1f8.firebasestorage.app",
+  messagingSenderId: "965083043591",
+  appId:             "1:965083043591:web:64eebe5586ff77e256d7a2",
+  measurementId:     "G-CH1ZSCCC6B"
+};
+
+const fbApp = initializeApp(FB_CONFIG);
+const db    = getFirestore(fbApp);
+const auth  = getAuth(fbApp);
+
+/* Allow auth to work from any domain (Netlify, custom domain etc) */
+auth.settings = auth.settings || {};
+try{ auth.useDeviceLanguage(); }catch(e){}
+
+/* ══════════════════════════════════════════
+   STATIC DATA
+══════════════════════════════════════════ */
+const T={
+  CSK:{bg:"#F5C518",tc:"#1A237E",dbg:"#1a1300",name:"Chennai Super Kings"},
+  MI:{bg:"#004BA0",tc:"#D4AF37",dbg:"#001430",name:"Mumbai Indians"},
+  RCB:{bg:"#CC0000",tc:"#FFD700",dbg:"#1a0000",name:"Royal Challengers"},
+  KKR:{bg:"#3A225D",tc:"#D4AF37",dbg:"#120820",name:"Kolkata Knight Riders"},
+  SRH:{bg:"#FF6B00",tc:"#fff",dbg:"#1a0d00",name:"Sunrisers Hyderabad"},
+  DC:{bg:"#17479E",tc:"#EF1C25",dbg:"#00102a",name:"Delhi Capitals"},
+  LSG:{bg:"#A72056",tc:"#00B1F1",dbg:"#1a000e",name:"Lucknow Super Giants"},
+  RR:{bg:"#E8438B",tc:"#fff",dbg:"#1a0010",name:"Rajasthan Royals"},
+  GT:{bg:"#1C2B5A",tc:"#C9A84C",dbg:"#050716",name:"Gujarat Titans"},
+  PBKS:{bg:"#ED1B24",tc:"#fff",dbg:"#1a0001",name:"Punjab Kings"},
+};
+
+function Logo(tk,sz=44){
+  const t=T[tk];if(!t)return`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:#1c2035;flex-shrink:0"></div>`;
+  const fs=sz<=22?Math.round(sz*.34):sz<=34?Math.round(sz*.30):Math.round(sz*.26);
+  return`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${t.bg};color:${t.tc};font-size:${fs}px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-shrink:0;letter-spacing:-0.5px;border:2px solid ${t.tc}33">${tk}</div>`;
+}
+
+/* ── Schedule auto-updates based on current IST time ── */
+/* Lock times are computed at load and refreshed every 60s.
+   Actual save enforcement uses serverTimestamp() in Firebase Security Rules.
+   Client lock is a UX hint; the real gate is server-side. */
+function getMatchStatus(dateStr, timeStr) {
+  const months={"Mar":2,"Apr":3};
+  const parts=dateStr.split(" ");
+  const day=parseInt(parts[0]);
+  const month=months[parts[1]]||3;
+  const timeParts=timeStr.replace(" PM","").replace(" AM","").split(":");
+  let hour=parseInt(timeParts[0]);
+  const min=parseInt(timeParts[1])||0;
+  const isPM=timeStr.includes("PM");
+  if(isPM&&hour!==12)hour+=12;
+  /* IST = UTC+5:30 */
+  const matchIST=new Date(Date.UTC(2026,month,day,hour-5,min-30,0));
+  const matchEndIST=new Date(matchIST.getTime()+4*60*60*1000);
+  const now=new Date();
+  if(now>matchEndIST)return"past";
+  if(now>=matchIST&&now<=matchEndIST)return"live";
+  const diff=matchIST-now;
+  const diffH=Math.floor(diff/3600000);
+  const diffM=Math.floor((diff%3600000)/60000);
+  const diffD=Math.floor(diffH/24);
+  let lockStr="";
+  if(diffD>0)lockStr=diffD+"d "+( diffH%24)+"h";
+  else if(diffH>0)lockStr=diffH+"h "+diffM+"m";
+  else lockStr=diffM+"m";
+  const nowIST=new Date(now.getTime()+5.5*60*60*1000);
+  const matchISTLocal=new Date(matchIST.getTime()+5.5*60*60*1000);
+  const sameDay=nowIST.getUTCFullYear()===matchISTLocal.getUTCFullYear()&&
+    nowIST.getUTCMonth()===matchISTLocal.getUTCMonth()&&
+    nowIST.getUTCDate()===matchISTLocal.getUTCDate();
+  return{status:sameDay?"next":"future",lock:lockStr};
+}
+
+/* Parse match time to UTC for lock enforcement */
+function getMatchUTC(dateStr, timeStr){
+  const months={"Mar":2,"Apr":3};
+  const parts=dateStr.split(" ");
+  const day=parseInt(parts[0]);
+  const month=months[parts[1]]||3;
+  const timeParts=timeStr.replace(" PM","").replace(" AM","").split(":");
+  let hour=parseInt(timeParts[0]);
+  const min=parseInt(timeParts[1])||0;
+  if(timeStr.includes("PM")&&hour!==12)hour+=12;
+  return new Date(Date.UTC(2026,month,day,hour-5,min-30,0));
+}
+
+/* Check if a match is locked (started or past) */
+function isMatchLocked(m){
+  if(m.status==="past"||m.status==="live")return true;
+  return new Date()>=getMatchUTC(m.date,m.time);
+}
+
+const SCH_RAW=[
+  {id:"m1",date:"28 Mar",day:"Sat",time:"7:30 PM",t1:"RCB",t2:"SRH",venue:"Chinnaswamy, Bengaluru",res:{t1s:"203/4",t2s:"201/9",winner:"RCB",margin:"6 wickets"}},
+  {id:"m2",date:"29 Mar",day:"Sun",time:"7:30 PM",t1:"MI",t2:"KKR",venue:"Wankhede, Mumbai",res:{t1s:"224/4",t2s:"220/4",winner:"MI",margin:"6 wickets"}},
+  {id:"m3",date:"30 Mar",day:"Mon",time:"7:30 PM",t1:"RR",t2:"CSK",venue:"Barsapara, Guwahati",res:{t1s:"128/2",t2s:"127/10",winner:"RR",margin:"8 wickets"}},
+  {id:"m4",date:"31 Mar",day:"Tue",time:"7:30 PM",t1:"PBKS",t2:"GT",venue:"Mullanpur, New Chandigarh",res:{t1s:"165/7",t2s:"162/6",winner:"PBKS",margin:"3 wickets"}},
+  {id:"m5",date:"1 Apr",day:"Wed",time:"7:30 PM",t1:"LSG",t2:"DC",venue:"Ekana, Lucknow",res:{t1s:"141/10",t2s:"145/4",winner:"DC",margin:"6 wickets"}},
+  {id:"m6",date:"2 Apr",day:"Thu",time:"7:30 PM",t1:"KKR",t2:"SRH",venue:"Eden Gardens, Kolkata",res:null},
+  {id:"m7",date:"3 Apr",day:"Fri",time:"7:30 PM",t1:"CSK",t2:"PBKS",venue:"Chidambaram, Chennai",res:null},
+  {id:"m8",date:"4 Apr",day:"Sat",time:"3:30 PM",t1:"DC",t2:"MI",venue:"Arun Jaitley, Delhi",res:null},
+  {id:"m9",date:"4 Apr",day:"Sat",time:"7:30 PM",t1:"GT",t2:"RR",venue:"Narendra Modi, Ahmedabad",res:null},
+  {id:"m10",date:"5 Apr",day:"Sun",time:"3:30 PM",t1:"SRH",t2:"LSG",venue:"Rajiv Gandhi, Hyderabad",res:null},
+];
+
+/* Recompute schedule status dynamically */
+function buildSCH(){
+  return SCH_RAW.map(m=>{
+    if(m.res){return{...m,status:"past",lock:null};}
+    const s=getMatchStatus(m.date,m.time);
+    if(typeof s==="string")return{...m,status:s,lock:null};
+    return{...m,status:s.status,lock:s.lock};
+  });
+}
+let SCH=buildSCH();
+
+/* BUG 5 (E2E): Auto-refresh match status every 60 seconds */
+setInterval(()=>{SCH=buildSCH();if(A.screen==="home")R();},60000);
+
+const CODES=[
+  {w:"GOOGLY",d:"A leg-spin delivery that deceives by turning the wrong way."},
+  {w:"YORKER",d:"Bowled at the batsman's feet — one of the hardest balls to hit."},
+  {w:"MAIDEN",d:"An over in which no runs are scored."},
+  {w:"BOUNCER",d:"Short-pitched delivery aimed at the batsman's head."},
+  {w:"DOOSRA",d:"The off-spinner's secret weapon that turns away from the bat."},
+  {w:"SUPEROVER",d:"A one-over eliminator bowled when the match is tied."},
+  {w:"FLIPPER",d:"A backspin leg-spin delivery that skids on low."},
+  {w:"CARROM",d:"Delivery flicked from the fingers like a carrom coin."},
+  {w:"SEAMER",d:"A bowler who moves the ball off the seam."},
+  {w:"INSWINGER",d:"Delivery that swings in toward the batsman's pads."},
+  {w:"CHINAMAN",d:"Left-arm wrist-spin that turns from off to leg."},
+  {w:"CORRIDOR",d:"The outside-off zone where batsmen can't decide to play or leave."},
+  {w:"DUCKWORTH",d:"The rain rule formula for setting fair targets in interrupted matches."},
+  {w:"NIGHTWATCH",d:"A lower-order batter sent in late to protect a specialist."},
+];
+const genCode=()=>CODES[Math.floor(Math.random()*CODES.length)];
+
+const RC={BAT:"#60a5fa",BOWL:"#f87171",AR:"#34d399",WK:"#fbbf24"};
+const RL={BAT:"Batter",BOWL:"Bowler",AR:"All-Rounder",WK:"WK"};
+
+const SQ={
+  CSK:[
+    {id:"c1",n:"Ruturaj Gaikwad",r:"BAT",c:"IN",cap:1},{id:"c2",n:"MS Dhoni",r:"WK",c:"IN"},{id:"c3",n:"Sanju Samson",r:"WK",c:"IN",form:"hot"},{id:"c4",n:"Dewald Brevis",r:"AR",c:"SA",form:"hot"},{id:"c5",n:"Ayush Mhatre",r:"BAT",c:"IN"},{id:"c6",n:"Kartik Sharma",r:"WK",c:"IN"},{id:"c7",n:"Sarfaraz Khan",r:"BAT",c:"IN"},{id:"c8",n:"Urvil Patel",r:"WK",c:"IN"},
+    {id:"c9",n:"Jamie Overton",r:"AR",c:"ENG"},{id:"c10",n:"Ramakrishna Ghosh",r:"AR",c:"IN"},{id:"c11",n:"Prashant Veer",r:"AR",c:"IN"},{id:"c12",n:"Matthew Short",r:"AR",c:"AUS"},{id:"c13",n:"Aman Khan",r:"BAT",c:"IN"},{id:"c14",n:"Zak Foulkes",r:"AR",c:"AUS"},{id:"c15",n:"Shivam Dube",r:"AR",c:"IN"},
+    {id:"c16",n:"Khaleel Ahmed",r:"BOWL",c:"IN"},{id:"c17",n:"Noor Ahmad",r:"BOWL",c:"AFG"},{id:"c18",n:"Anshul Kamboj",r:"BOWL",c:"IN"},{id:"c19",n:"Mukesh Choudhary",r:"BOWL",c:"IN"},{id:"c20",n:"Shreyas Gopal",r:"AR",c:"IN"},{id:"c21",n:"Gurjapneet Singh",r:"BOWL",c:"IN"},{id:"c22",n:"Akeal Hosein",r:"BOWL",c:"WI"},{id:"c23",n:"Matt Henry",r:"BOWL",c:"NZ"},{id:"c24",n:"Rahul Chahar",r:"BOWL",c:"IN"},{id:"c25",n:"Spencer Johnson",r:"BOWL",c:"AUS"}
+  ],
+  DC:[
+    {id:"d1",n:"KL Rahul",r:"WK",c:"IN"},{id:"d2",n:"Axar Patel",r:"AR",c:"IN",cap:1},{id:"d3",n:"Karun Nair",r:"BAT",c:"IN"},{id:"d4",n:"David Miller",r:"BAT",c:"SA"},{id:"d5",n:"Pathum Nissanka",r:"BAT",c:"SL"},{id:"d6",n:"Sahil Parakh",r:"BAT",c:"IN"},{id:"d7",n:"Prithvi Shaw",r:"BAT",c:"IN"},{id:"d8",n:"Abishek Porel",r:"WK",c:"IN"},{id:"d9",n:"Tristan Stubbs",r:"BAT",c:"SA"},
+    {id:"d10",n:"Sameer Rizvi",r:"AR",c:"IN"},{id:"d11",n:"Ashutosh Sharma",r:"AR",c:"IN"},{id:"d12",n:"Vipraj Nigam",r:"AR",c:"IN"},{id:"d13",n:"Ajay Mandal",r:"AR",c:"IN"},{id:"d14",n:"Tripurana Vijay",r:"AR",c:"IN"},{id:"d15",n:"Madhav Tiwari",r:"AR",c:"IN"},{id:"d16",n:"Nitish Rana",r:"AR",c:"IN"},
+    {id:"d17",n:"Mitchell Starc",r:"BOWL",c:"AUS"},{id:"d18",n:"T Natarajan",r:"BOWL",c:"IN"},{id:"d19",n:"Mukesh Kumar",r:"BOWL",c:"IN"},{id:"d20",n:"Dushmantha Chameera",r:"BOWL",c:"SL"},{id:"d21",n:"Lungi Ngidi",r:"BOWL",c:"SA"},{id:"d22",n:"Kyle Jamieson",r:"BOWL",c:"NZ"},{id:"d23",n:"Kuldeep Yadav",r:"BOWL",c:"IN"}
+  ],
+  GT:[
+    {id:"g1",n:"Shubman Gill",r:"BAT",c:"IN",cap:1,form:"hot"},{id:"g2",n:"Jos Buttler",r:"WK",c:"ENG"},{id:"g3",n:"Kumar Kushagra",r:"WK",c:"IN"},{id:"g4",n:"Anuj Rawat",r:"WK",c:"IN"},{id:"g5",n:"Tom Banton",r:"WK",c:"ENG"},{id:"g6",n:"Glenn Phillips",r:"WK",c:"NZ"},{id:"g7",n:"Sai Sudharsan",r:"BAT",c:"IN",form:"hot"},
+    {id:"g8",n:"Nishant Sindhu",r:"AR",c:"IN"},{id:"g9",n:"Washington Sundar",r:"AR",c:"IN"},{id:"g10",n:"Mohd Arshad Khan",r:"AR",c:"IN"},{id:"g11",n:"Sai Kishore",r:"AR",c:"IN"},{id:"g12",n:"Jayant Yadav",r:"AR",c:"IN"},{id:"g13",n:"Jason Holder",r:"AR",c:"WI"},{id:"g14",n:"Rahul Tewatia",r:"AR",c:"IN"},{id:"g15",n:"Shahrukh Khan",r:"AR",c:"IN"},
+    {id:"g16",n:"Kagiso Rabada",r:"BOWL",c:"SA"},{id:"g17",n:"Mohammed Siraj",r:"BOWL",c:"IN"},{id:"g18",n:"Prasidh Krishna",r:"BOWL",c:"IN"},{id:"g19",n:"Manav Suthar",r:"BOWL",c:"IN"},{id:"g20",n:"Gurnoor Brar",r:"BOWL",c:"IN"},{id:"g21",n:"Ishant Sharma",r:"BOWL",c:"IN"},{id:"g22",n:"Ashok Sharma",r:"BOWL",c:"IN"},{id:"g23",n:"Luke Wood",r:"BOWL",c:"ENG"},{id:"g24",n:"Kulwant Khejroliya",r:"BOWL",c:"IN"},{id:"g25",n:"Rashid Khan",r:"BOWL",c:"AFG",form:"hot"}
+  ],
+  KKR:[
+    {id:"k1",n:"Ajinkya Rahane",r:"BAT",c:"IN",cap:1},{id:"k2",n:"Rinku Singh",r:"BAT",c:"IN",form:"hot"},{id:"k3",n:"Angkrish Raghuvanshi",r:"BAT",c:"IN"},{id:"k4",n:"Manish Pandey",r:"BAT",c:"IN"},{id:"k5",n:"Finn Allen",r:"WK",c:"NZ"},{id:"k6",n:"Tejasvi Singh",r:"BAT",c:"IN"},{id:"k7",n:"Rahul Tripathi",r:"BAT",c:"IN"},{id:"k8",n:"Tim Seifert",r:"WK",c:"NZ"},{id:"k9",n:"Rovman Powell",r:"BAT",c:"WI"},
+    {id:"k10",n:"Anukul Roy",r:"AR",c:"IN"},{id:"k11",n:"Cameron Green",r:"AR",c:"AUS",form:"warn"},{id:"k12",n:"Sarthak Ranjan",r:"AR",c:"IN"},{id:"k13",n:"Daksh Kamra",r:"AR",c:"IN"},{id:"k14",n:"Rachin Ravindra",r:"AR",c:"NZ"},{id:"k15",n:"Ramandeep Singh",r:"AR",c:"IN"},{id:"k16",n:"Sunil Narine",r:"AR",c:"WI"},
+    {id:"k17",n:"Blessing Muzarabani",r:"BOWL",c:"ZIM"},{id:"k18",n:"Vaibhav Arora",r:"BOWL",c:"IN"},{id:"k19",n:"Matheesha Pathirana",r:"BOWL",c:"SL",form:"hot"},{id:"k20",n:"Kartik Tyagi",r:"BOWL",c:"IN"},{id:"k21",n:"Prashant Solanki",r:"BOWL",c:"IN"},{id:"k22",n:"Saurabh Dubey",r:"BOWL",c:"IN"},{id:"k23",n:"Navdeep Saini",r:"BOWL",c:"IN"},{id:"k24",n:"Umran Malik",r:"BOWL",c:"IN"},{id:"k25",n:"Varun Chakravarthy",r:"BOWL",c:"IN"}
+  ],
+  LSG:[
+    {id:"l1",n:"Rishabh Pant",r:"WK",c:"IN",cap:1,form:"hot"},{id:"l2",n:"Aiden Markram",r:"BAT",c:"SA"},{id:"l3",n:"Himmat Singh",r:"BAT",c:"IN"},{id:"l4",n:"Matthew Breetzke",r:"BAT",c:"SA"},{id:"l5",n:"Mukul Choudhary",r:"BAT",c:"IN"},{id:"l6",n:"Akshat Raghuwanshi",r:"BAT",c:"IN"},{id:"l7",n:"Josh Inglis",r:"WK",c:"AUS"},{id:"l8",n:"Nicholas Pooran",r:"WK",c:"WI"},
+    {id:"l9",n:"Mitchell Marsh",r:"AR",c:"AUS"},{id:"l10",n:"Abdul Samad",r:"AR",c:"IN"},{id:"l11",n:"Shahbaz Ahmed",r:"AR",c:"IN"},{id:"l12",n:"Arshin Kulkarni",r:"AR",c:"IN"},{id:"l13",n:"Wanindu Hasaranga",r:"AR",c:"SL"},{id:"l14",n:"Ayush Badoni",r:"AR",c:"IN"},
+    {id:"l15",n:"Mohammad Shami",r:"BOWL",c:"IN",form:"warn"},{id:"l16",n:"Avesh Khan",r:"BOWL",c:"IN"},{id:"l17",n:"M Siddharth",r:"BOWL",c:"IN"},{id:"l18",n:"Digvesh Singh",r:"BOWL",c:"IN"},{id:"l19",n:"Akash Singh",r:"BOWL",c:"IN"},{id:"l20",n:"Prince Yadav",r:"BOWL",c:"IN"},{id:"l21",n:"Arjun Tendulkar",r:"BOWL",c:"IN"},{id:"l22",n:"Anrich Nortje",r:"BOWL",c:"SA"},{id:"l23",n:"Mayank Yadav",r:"BOWL",c:"IN",form:"warn"},{id:"l24",n:"Mohsin Khan",r:"BOWL",c:"IN"}
+  ],
+  MI:[
+    {id:"m1p",n:"Rohit Sharma",r:"BAT",c:"IN"},{id:"m2p",n:"Suryakumar Yadav",r:"BAT",c:"IN",form:"hot"},{id:"m3p",n:"Tilak Varma",r:"BAT",c:"IN",form:"hot"},{id:"m4p",n:"Robin Minz",r:"WK",c:"IN"},{id:"m5p",n:"Sherfane Rutherford",r:"BAT",c:"WI"},{id:"m6p",n:"Ryan Rickelton",r:"BAT",c:"SA"},{id:"m7p",n:"Quinton de Kock",r:"WK",c:"SA"},{id:"m8p",n:"Danish Malewar",r:"BAT",c:"IN"},
+    {id:"m9p",n:"Hardik Pandya",r:"AR",c:"IN",cap:1},{id:"m10p",n:"Naman Dhir",r:"AR",c:"IN"},{id:"m11p",n:"Mitchell Santner",r:"AR",c:"NZ"},{id:"m12p",n:"Raj Angad Bawa",r:"AR",c:"IN"},{id:"m13p",n:"Atharva Ankolekar",r:"AR",c:"IN"},{id:"m14p",n:"Mayank Rawat",r:"AR",c:"IN"},{id:"m15p",n:"Corbin Bosch",r:"AR",c:"SA"},{id:"m16p",n:"Will Jacks",r:"AR",c:"ENG"},{id:"m17p",n:"Shardul Thakur",r:"AR",c:"IN"},
+    {id:"m18p",n:"Trent Boult",r:"BOWL",c:"NZ"},{id:"m19p",n:"Jasprit Bumrah",r:"BOWL",c:"IN",form:"hot"},{id:"m20p",n:"Mayank Markande",r:"BOWL",c:"IN"},{id:"m21p",n:"Deepak Chahar",r:"BOWL",c:"IN"},{id:"m22p",n:"Ashwani Kumar",r:"BOWL",c:"IN"},{id:"m23p",n:"Allah Ghazanfar",r:"BOWL",c:"AFG"}
+  ],
+  PBKS:[
+    {id:"p1",n:"Shreyas Iyer",r:"BAT",c:"IN",cap:1},{id:"p2",n:"Nehal Wadhera",r:"BAT",c:"IN"},{id:"p3",n:"Vishnu Vinod",r:"WK",c:"IN"},{id:"p4",n:"Harnoor Pannu",r:"BAT",c:"IN"},{id:"p5",n:"Pyla Avinash",r:"BAT",c:"IN"},{id:"p6",n:"Prabhsimran Singh",r:"WK",c:"IN"},{id:"p7",n:"Shashank Singh",r:"BAT",c:"IN"},
+    {id:"p8",n:"Marcus Stoinis",r:"AR",c:"AUS"},{id:"p9",n:"Harpreet Brar",r:"AR",c:"IN"},{id:"p10",n:"Marco Jansen",r:"AR",c:"SA"},{id:"p11",n:"Azmatullah Omarzai",r:"AR",c:"AFG"},{id:"p12",n:"Priyansh Arya",r:"AR",c:"IN"},{id:"p13",n:"Musheer Khan",r:"AR",c:"IN"},{id:"p14",n:"Suryansh Shedge",r:"AR",c:"IN"},{id:"p15",n:"Mitch Owen",r:"AR",c:"AUS"},{id:"p16",n:"Cooper Connolly",r:"AR",c:"AUS"},{id:"p17",n:"Ben Dwarshuis",r:"AR",c:"AUS"},
+    {id:"p18",n:"Arshdeep Singh",r:"BOWL",c:"IN"},{id:"p19",n:"Yuzvendra Chahal",r:"BOWL",c:"IN",form:"hot"},{id:"p20",n:"Vyshak Vijaykumar",r:"BOWL",c:"IN"},{id:"p21",n:"Yash Thakur",r:"BOWL",c:"IN"},{id:"p22",n:"Xavier Bartlett",r:"BOWL",c:"AUS"},{id:"p23",n:"Pravin Dubey",r:"BOWL",c:"IN"},{id:"p24",n:"Lockie Ferguson",r:"BOWL",c:"NZ"}
+  ],
+  RR:[
+    {id:"rr1",n:"Riyan Parag",r:"AR",c:"IN",cap:1,form:"hot"},{id:"rr2",n:"Yashasvi Jaiswal",r:"BAT",c:"IN",form:"hot"},{id:"rr3",n:"Dhruv Jurel",r:"WK",c:"IN"},{id:"rr4",n:"Shubham Dubey",r:"BAT",c:"IN"},{id:"rr5",n:"Vaibhav Suryavanshi",r:"BAT",c:"IN",form:"hot"},{id:"rr6",n:"Donovan Ferreira",r:"BAT",c:"SA"},{id:"rr7",n:"Lhuan-Dre Pretorius",r:"BAT",c:"SA"},{id:"rr8",n:"Shimron Hetmyer",r:"BAT",c:"WI"},
+    {id:"rr9",n:"Ravindra Jadeja",r:"AR",c:"IN"},{id:"rr10",n:"Yudhvir Charak",r:"AR",c:"IN"},{id:"rr11",n:"Dasun Shanaka",r:"AR",c:"SL"},
+    {id:"rr12",n:"Jofra Archer",r:"BOWL",c:"ENG"},{id:"rr13",n:"Tushar Deshpande",r:"BOWL",c:"IN"},{id:"rr14",n:"Kwena Maphaka",r:"BOWL",c:"SA"},{id:"rr15",n:"Ravi Bishnoi",r:"BOWL",c:"IN"},{id:"rr16",n:"Sushant Mishra",r:"BOWL",c:"IN"},{id:"rr17",n:"Adam Milne",r:"BOWL",c:"NZ"},{id:"rr18",n:"Kuldeep Sen",r:"BOWL",c:"IN"},{id:"rr19",n:"Sandeep Sharma",r:"BOWL",c:"IN"},{id:"rr20",n:"Nandre Burger",r:"BOWL",c:"SA"}
+  ],
+  RCB:[
+    {id:"r1",n:"Virat Kohli",r:"BAT",c:"IN",form:"hot"},{id:"r2",n:"Rajat Patidar",r:"BAT",c:"IN",cap:1},{id:"r3",n:"Devdutt Padikkal",r:"BAT",c:"IN"},{id:"r4",n:"Phil Salt",r:"WK",c:"ENG"},{id:"r5",n:"Jitesh Sharma",r:"WK",c:"IN"},{id:"r6",n:"Jordan Cox",r:"WK",c:"ENG"},
+    {id:"r7",n:"Krunal Pandya",r:"AR",c:"IN"},{id:"r8",n:"Swapnil Singh",r:"AR",c:"IN"},{id:"r9",n:"Tim David",r:"AR",c:"SG",form:"hot"},{id:"r10",n:"Romario Shepherd",r:"AR",c:"WI"},{id:"r11",n:"Jacob Bethell",r:"AR",c:"ENG"},{id:"r12",n:"Venkatesh Iyer",r:"AR",c:"IN"},{id:"r13",n:"Satvik Deswal",r:"AR",c:"IN"},{id:"r14",n:"Mangesh Yadav",r:"AR",c:"IN"},{id:"r15",n:"Vicky Ostwal",r:"AR",c:"IN"},{id:"r16",n:"Vihaan Malhotra",r:"AR",c:"IN"},{id:"r17",n:"Kanishk Chouhan",r:"AR",c:"IN"},
+    {id:"r18",n:"Josh Hazlewood",r:"BOWL",c:"AUS"},{id:"r19",n:"Rasikh Dar",r:"BOWL",c:"IN"},{id:"r20",n:"Suyash Sharma",r:"BOWL",c:"IN"},{id:"r21",n:"Bhuvneshwar Kumar",r:"BOWL",c:"IN",form:"warn"},{id:"r22",n:"Nuwan Thushara",r:"BOWL",c:"SL"},{id:"r23",n:"Abinandan Singh",r:"BOWL",c:"IN"},{id:"r24",n:"Jacob Duffy",r:"BOWL",c:"NZ"},{id:"r25",n:"Yash Dayal",r:"BOWL",c:"IN"}
+  ],
+  SRH:[
+    {id:"s1",n:"Ishan Kishan",r:"WK",c:"IN"},{id:"s2",n:"Travis Head",r:"BAT",c:"AUS",form:"hot"},{id:"s3",n:"Heinrich Klaasen",r:"WK",c:"SA",form:"hot"},{id:"s4",n:"Aniket Verma",r:"BAT",c:"IN"},{id:"s5",n:"Smaran Ravichandran",r:"BAT",c:"IN"},{id:"s6",n:"Salil Arora",r:"BAT",c:"IN"},
+    {id:"s7",n:"Abhishek Sharma",r:"AR",c:"IN"},{id:"s8",n:"Harshal Patel",r:"AR",c:"IN"},{id:"s9",n:"Kamindu Mendis",r:"AR",c:"SL"},{id:"s10",n:"Harsh Dubey",r:"AR",c:"IN"},{id:"s11",n:"Brydon Carse",r:"AR",c:"ENG"},{id:"s12",n:"Shivang Kumar",r:"AR",c:"IN"},{id:"s13",n:"Liam Livingstone",r:"AR",c:"ENG"},{id:"s14",n:"David Payne",r:"AR",c:"ENG"},{id:"s15",n:"Nitish Kumar Reddy",r:"AR",c:"IN"},
+    {id:"s16",n:"Pat Cummins",r:"BOWL",c:"AUS",cap:1},{id:"s17",n:"Zeeshan Ansari",r:"BOWL",c:"IN"},{id:"s18",n:"Jaydev Unadkat",r:"BOWL",c:"IN"},{id:"s19",n:"Eshan Malinga",r:"BOWL",c:"IN"},{id:"s20",n:"Sakib Hussain",r:"BOWL",c:"IN"},{id:"s21",n:"Shivam Mavi",r:"BOWL",c:"IN",form:"warn"}
+  ],
+};
+const CR={};Object.keys(SQ).forEach(t=>SQ[t].forEach((p,i)=>{CR[p.id]=parseFloat((7+Math.min(3,i*.08+Math.random()*0.5)).toFixed(1))}));
+/* Star players — higher credits */
+[["r1",12],["r2",10],["r4",10.5],["r9",10],["r11",9.5],["r18",10],
+["s2",11.5],["s3",10.5],["s7",10],["s11",9.5],["s13",10],["s15",9.5],["s16",11],
+["m1p",11],["m2p",11],["m3p",10.5],["m9p",10.5],["m7p",9.5],["m19p",12],["m18p",10],["m16p",9.5],["m21p",9],
+["k1",9.5],["k2",10.5],["k11",11],["k14",9.5],["k16",10.5],["k19",10],["k25",10],
+["c1",10.5],["c2",9.5],["c3",11],["c4",10],["c15",9.5],["c23",9],["c25",9.5],
+["rr1",10],["rr2",11],["rr9",10.5],["rr12",10],["rr8",9.5],
+["p1",10.5],["p8",10],["p10",10],["p19",10],["p24",9.5],
+["g1",11],["g2",10.5],["g7",9.5],["g16",10.5],["g25",11],
+["l1",12],["l2",10],["l8",10],["l9",10],["l13",10],["l22",9.5],
+["d1",10.5],["d2",10],["d4",9.5],["d17",11],["d23",10]
+].forEach(([id,v])=>CR[id]=v);
+
+/* Safe credit sum — avoids JS floating point errors like 99.99999 vs 100 */
+function creditSum(sel){return Math.round(sel.reduce((a,x)=>a+(CR[x.id]||7),0)*10)/10;}
+
+function fTag(f){
+  if(f==="hot")return`<span style="font-size:8px;padding:1px 5px;border-radius:99px;background:#ef444418;color:#f87171;border:1px solid #ef444430;margin-left:4px">&#128293;</span>`;
+  if(f==="warn")return`<span style="font-size:8px;padding:1px 5px;border-radius:99px;background:#f59e0b18;color:#fbbf24;border:1px solid #f59e0b30;margin-left:4px">&#9888;</span>`;
+  return"";
+}
+
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+let A={
+  screen:"ob",ob:0,
+  fbUser:null,profile:null,avatar:null,
+  authStep:"login",authName:"",authEmail:"",authPass:"",authLoading:false,authError:"",authBusy:false,
+  match:null,mode:null,step:"pick",
+  sel:[],C:null,VC:null,IP1:null,IP2:null,
+  xiF:"ALL",xiR:"ALL",xiQ:"",copXI:false,
+  squad3:[],done3:false,r3F:"ALL",r3Q:"",
+  savedXI:null,savedR3:null,
+  lbTab:"xi",lbRows:[],lbSeason:[],
+  notif:true,liveSc:false,liveCt:false,showPre:null,
+  showSh:false,shCode:null,shDef:false,copied:false,
+  pastOpen:false,futOpen:false,
+  codeItem:null,code3:null,
+  sqTm:"RCB",sqR:"ALL",
+  chMode:null,chName:"",chCode:"",chFmt:"xi",chDef:null,
+  challenges:[],grpBadge:0,
+  actFeed:[],lbUnsub:null,
+};
+
+/* ══════════════════════════════════════════
+   TOAST
+══════════════════════════════════════════ */
+function toast(msg,ok=true){
+  const el=document.getElementById("toast");if(!el)return;
+  el.textContent=msg;
+  el.style.background=ok?"#14532d":"#450a0a";
+  el.style.color=ok?"#86efac":"#fca5a5";
+  el.style.border=`1px solid ${ok?"#22c55e44":"#ef444444"}`;
+  el.style.display="block";
+  setTimeout(()=>{el.style.display="none"},2400);
+}
+
+/* ══════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════ */
+function R(){
+  const app=document.getElementById("app");if(!app)return;
+  /* Save all scroll positions and focus before re-render */
+  const focused=document.activeElement;
+  const focusId=focused?.id||"";
+  const focusSel=focused?.selectionStart;
+  const mainEl=document.getElementById("main");
+  const mainScroll=mainEl?mainEl.scrollTop:0;
+  const plEl=document.getElementById("player-list");
+  const plScroll=plEl?plEl.scrollTop:0;
+
+  if(A.screen==="ob"){app.innerHTML=OB();return;}
+  if(!A.fbUser){app.innerHTML=AuthScreen();_restoreFocus(focusId,focusSel);return;}
+  const av=A.avatar?`<img src="${A.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`
+    :`<span style="font-size:10px;font-weight:800">${(A.profile?.name||"?").substring(0,2).toUpperCase()}</span>`;
+  app.innerHTML=`
+    ${A.liveSc?MScore():""}${A.liveCt?MCentre():""}${A.showSh?ShareSh():""}${A.showPre?PreMatch():""}
+    <div class="hdr">
+      <div style="display:flex;align-items:center;gap:8px">
+        ${A.screen==="play"?`<button onclick="back()" style="background:transparent;border:none;color:#6366f1;font-size:16px;cursor:pointer;padding:0;line-height:1">&#8592;</button>`:""}
+        <div class="logo"><div class="logo-dot"></div>dotball</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px">
+        <div class="live-pill"><span class="blink">&#9679;</span> Live</div>
+        <div class="av" onclick="nav('profile')">${av}</div>
+      </div>
+    </div>
+    <div class="content" id="main">${Page()}</div>
+    ${A.screen!=="play"?NavBar():""}`;
+  /* Restore all scroll positions */
+  const nm=document.getElementById("main");
+  if(nm)nm.scrollTop=mainScroll;
+  const np=document.getElementById("player-list");
+  if(np)np.scrollTop=plScroll;
+  _restoreFocus(focusId,focusSel);
+}
+function _restoreFocus(id,sel){
+  if(!id)return;
+  requestAnimationFrame(()=>{
+    const el=document.getElementById(id);
+    if(el){el.focus();if(typeof sel==="number"&&el.setSelectionRange){try{el.setSelectionRange(sel,sel);}catch(e){}}}
+  });
+}
+
+function OB(){
+  const slides=[
+    {ic:"&#127951;",t:"Welcome to dotball",b:"IPL 2026 fantasy with friends and family.\nNo money involved — just cricket knowledge.",g:"linear-gradient(135deg,#6366f1,#8b5cf6)"},
+    {ic:"&#9889;",t:"Two formats",b:"Classic XI — pick 11 players within a 100-credit budget.\n\nTop 3 — predict your top 3 run scorers.",g:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+    {ic:"&#128274;",t:"Squads stay secret",b:"Nobody sees your picks until the\nvery first ball is bowled.\nPure skill wins.",g:"linear-gradient(135deg,#22c55e,#06b6d4)"},
+  ];
+  const sl=slides[A.ob];
+  return`<div style="height:100vh;background:#08090f;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 24px;text-align:center">
+    <div style="font-size:64px;line-height:1;margin-bottom:22px">${sl.ic}</div>
+    <div style="font-size:23px;font-weight:700;color:#eef0ff;margin-bottom:12px;line-height:1.2">${sl.t}</div>
+    <div style="font-size:14px;color:#7a85a0;margin-bottom:30px;line-height:1.85;white-space:pre-line">${sl.b}</div>
+    <div style="display:flex;gap:6px;justify-content:center;margin-bottom:24px">
+      ${slides.map((_,i)=>`<div style="height:4px;border-radius:99px;background:${i===A.ob?"#6366f1":"#1c2035"};width:${i===A.ob?28:10}px;transition:all .3s"></div>`).join("")}
+    </div>
+    <button onclick="obN()" style="width:100%;max-width:300px;padding:15px;border-radius:14px;border:none;background:${sl.g};color:#fff;font-weight:700;font-size:15px;cursor:pointer">${A.ob<2?"Next":"Get started"}</button>
+    ${A.ob<2?`<button onclick="obS()" style="margin-top:13px;background:transparent;border:none;color:#424960;font-size:12px;cursor:pointer">Skip</button>`:""}
+  </div>`;
+}
+
+function AuthScreen(){
+  const err=A.authError?`<div style="font-size:11px;color:#fca5a5;background:#450a0a;border:1px solid #ef444444;padding:8px 10px;border-radius:8px;margin-bottom:12px">${A.authError}</div>`:"";
+  const isSignup=A.authStep==="signup";
+  const isReset=A.authStep==="reset";
+
+  if(isReset){return`<div style="height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto">
+    <div style="margin-bottom:28px;text-align:center">
+      <div class="logo" style="font-size:26px;justify-content:center"><div class="logo-dot" style="width:10px;height:10px"></div>dotball</div>
+      <div style="font-size:9px;color:#424960;letter-spacing:3px;margin-top:5px">IPL 2026 FANTASY</div>
+    </div>
+    <div style="width:100%;max-width:340px;background:#111421;border-radius:18px;padding:24px 20px;border:1px solid #1c2035">
+      <div style="font-size:17px;font-weight:700;color:#eef0ff;margin-bottom:4px">Reset password</div>
+      <div style="font-size:12px;color:#7a85a0;margin-bottom:18px">We'll send a reset link to your email</div>
+      ${err}
+      <input id="auth-email" type="email" inputmode="email" autocomplete="email" placeholder="Email address"
+        style="width:100%;padding:13px;border-radius:11px;border:1px solid #1c2035;background:#0d0f1a;color:#eef0ff;font-size:14px;margin-bottom:12px;box-sizing:border-box;-webkit-appearance:none"
+        value="${A.authEmail}" oninput="A.authEmail=this.value" onchange="A.authEmail=this.value">
+      <button onclick="doResetPw()" style="width:100%;padding:14px;border-radius:12px;border:none;background:${A.authLoading?"#1e293b":"linear-gradient(135deg,#6366f1,#8b5cf6)"};color:#fff;font-weight:700;font-size:15px;cursor:pointer;-webkit-appearance:none;opacity:${A.authLoading?.6:1}" ${A.authLoading?"disabled":""}>${A.authLoading?"Sending...":"Send reset link"}</button>
+      <button onclick="A.authStep='login';A.authError='';R()" style="margin-top:14px;background:transparent;border:none;color:#818cf8;font-size:12px;cursor:pointer;width:100%;text-align:center">&#8592; Back to login</button>
+    </div>
+  </div>`;}
+
+  return`<div style="height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;overflow-y:auto">
+    <div style="margin-bottom:28px;text-align:center">
+      <div class="logo" style="font-size:26px;justify-content:center"><div class="logo-dot" style="width:10px;height:10px"></div>dotball</div>
+      <div style="font-size:9px;color:#424960;letter-spacing:3px;margin-top:5px">IPL 2026 FANTASY</div>
+    </div>
+    <div style="width:100%;max-width:340px;background:#111421;border-radius:18px;padding:24px 20px;border:1px solid #1c2035">
+      <div style="font-size:17px;font-weight:700;color:#eef0ff;margin-bottom:4px">${isSignup?"Create your account":"Welcome back"}</div>
+      <div style="font-size:12px;color:#7a85a0;margin-bottom:18px">${isSignup?"Sign up to start playing":"Sign in to continue"}</div>
+      ${err}
+      ${isSignup?`<input id="auth-name" type="text" autocomplete="name" autocapitalize="words" placeholder="Display name (e.g. CricketKing99)"
+        style="width:100%;padding:13px;border-radius:11px;border:1px solid #1c2035;background:#0d0f1a;color:#eef0ff;font-size:14px;margin-bottom:10px;box-sizing:border-box;-webkit-appearance:none"
+        value="${A.authName}" oninput="A.authName=this.value" onchange="A.authName=this.value">`:""}
+      <input id="auth-email" type="email" inputmode="email" autocomplete="email" placeholder="Email address"
+        style="width:100%;padding:13px;border-radius:11px;border:1px solid #1c2035;background:#0d0f1a;color:#eef0ff;font-size:14px;margin-bottom:10px;box-sizing:border-box;-webkit-appearance:none"
+        value="${A.authEmail}" oninput="A.authEmail=this.value" onchange="A.authEmail=this.value">
+      <input id="auth-pass" type="password" autocomplete="${isSignup?"new-password":"current-password"}" placeholder="${isSignup?"Create password (min 6 chars)":"Password"}"
+        style="width:100%;padding:13px;border-radius:11px;border:1px solid #1c2035;background:#0d0f1a;color:#eef0ff;font-size:14px;margin-bottom:${isSignup?"12":"6"}px;box-sizing:border-box;-webkit-appearance:none"
+        value="${A.authPass}" oninput="A.authPass=this.value" onchange="A.authPass=this.value"
+        onkeydown="if(event.key==='Enter'){${isSignup?'doEmailSignup()':'doEmailLogin()'};}">
+      ${!isSignup?`<div style="text-align:right;margin-bottom:14px"><button onclick="A.authStep='reset';A.authError='';R()" style="background:transparent;border:none;color:#818cf8;font-size:11px;cursor:pointer;padding:0">Forgot password?</button></div>`:""}
+      <button onclick="${isSignup?'doEmailSignup()':'doEmailLogin()'}"
+        style="width:100%;padding:14px;border-radius:12px;border:none;background:${A.authLoading?"#1e293b":"linear-gradient(135deg,#6366f1,#8b5cf6)"};color:#fff;font-weight:700;font-size:15px;cursor:pointer;-webkit-appearance:none;opacity:${A.authLoading?.6:1}"
+        ${A.authLoading?"disabled":""}>${A.authLoading?(isSignup?"Creating account...":"Signing in..."):(isSignup?"Create account":"Sign in")}</button>
+      <div style="margin-top:16px;text-align:center;font-size:12px;color:#7a85a0">
+        ${isSignup?`Already have an account? <button onclick="A.authStep='login';A.authError='';R()" style="background:transparent;border:none;color:#818cf8;font-size:12px;cursor:pointer;font-weight:600">Sign in</button>`
+        :`New to dotball? <button onclick="A.authStep='signup';A.authError='';R()" style="background:transparent;border:none;color:#818cf8;font-size:12px;cursor:pointer;font-weight:600">Create account</button>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ── Email Auth Functions ── */
+function _authErr(code){
+  const map={"auth/email-already-in-use":"This email is already registered. Try signing in instead.",
+    "auth/invalid-email":"Please enter a valid email address.",
+    "auth/weak-password":"Password must be at least 6 characters.",
+    "auth/user-not-found":"No account found with this email. Try signing up.",
+    "auth/wrong-password":"Incorrect password. Try again or reset it.",
+    "auth/invalid-credential":"Incorrect email or password.",
+    "auth/too-many-requests":"Too many attempts. Please wait a moment and try again.",
+    "auth/network-request-failed":"Network error. Check your connection and try again."};
+  return map[code]||"Something went wrong. Please try again.";
+}
+
+async function doEmailSignup(){
+  const nameInp=document.getElementById("auth-name");
+  const emailInp=document.getElementById("auth-email");
+  const passInp=document.getElementById("auth-pass");
+  const n=(nameInp?nameInp.value:A.authName||"").trim();
+  const e=(emailInp?emailInp.value:A.authEmail||"").trim();
+  const p=passInp?passInp.value:A.authPass||"";
+  A.authName=n;A.authEmail=e;A.authPass=p;
+  if(n.length<2){A.authError="Display name must be at least 2 characters";R();return;}
+  if(!e||!e.includes("@")){A.authError="Please enter a valid email address";R();return;}
+  if(p.length<6){A.authError="Password must be at least 6 characters";R();return;}
+  A.authError="";A.authLoading=true;A.authBusy=true;R();
+  try{
+    const cred=await createUserWithEmailAndPassword(auth,e,p);
+    await updateProfile(cred.user,{displayName:n});
+    await setDoc(doc(db,"users",cred.user.uid),{name:n,uid:cred.user.uid,email:e,createdAt:serverTimestamp()},{merge:true});
+    A.fbUser=cred.user;A.profile={name:n,uid:cred.user.uid};
+    localStorage.setItem("db_name",n);localStorage.setItem("db_uid",cred.user.uid);
+    A.authLoading=false;A.authBusy=false;A.authPass="";A.screen="home";R();
+    toast("Welcome to dotball, "+n+"! &#127951;");
+    loadChallenges();
+  }catch(err){A.authLoading=false;A.authBusy=false;A.authError=_authErr(err.code);R();}
+}
+
+async function doEmailLogin(){
+  const emailInp=document.getElementById("auth-email");
+  const passInp=document.getElementById("auth-pass");
+  const e=(emailInp?emailInp.value:A.authEmail||"").trim();
+  const p=passInp?passInp.value:A.authPass||"";
+  A.authEmail=e;A.authPass=p;
+  if(!e||!e.includes("@")){A.authError="Please enter a valid email address";R();return;}
+  if(p.length<1){A.authError="Please enter your password";R();return;}
+  A.authError="";A.authLoading=true;A.authBusy=true;R();
+  try{
+    const cred=await signInWithEmailAndPassword(auth,e,p);
+    const n=cred.user.displayName||e.split("@")[0];
+    A.fbUser=cred.user;A.profile={name:n,uid:cred.user.uid};
+    localStorage.setItem("db_name",n);localStorage.setItem("db_uid",cred.user.uid);
+    A.authLoading=false;A.authBusy=false;A.authPass="";A.screen="home";R();
+    toast("Welcome back, "+n+"! &#127951;");
+    loadChallenges();
+  }catch(err){A.authLoading=false;A.authBusy=false;A.authError=_authErr(err.code);R();}
+}
+
+async function doResetPw(){
+  const emailInp=document.getElementById("auth-email");
+  const e=(emailInp?emailInp.value:A.authEmail||"").trim();
+  if(!e||!e.includes("@")){A.authError="Please enter your email address";R();return;}
+  A.authError="";A.authLoading=true;R();
+  try{
+    await sendPasswordResetEmail(auth,e);
+    A.authLoading=false;A.authError="";
+    toast("Reset link sent to "+e+"! Check your inbox.");
+    A.authStep="login";R();
+  }catch(err){A.authLoading=false;A.authError=_authErr(err.code);R();}
+}
+
+function playBtn(){
+  if(A.authStep==="signup")doEmailSignup();
+  else doEmailLogin();
+}
+
+function Page(){
+  if(A.screen==="play"&&A.mode==="xi")return XI();
+  if(A.screen==="play"&&A.mode==="r3")return R3();
+  if(A.screen==="home")return Home();
+  if(A.screen==="boards")return LB();
+  if(A.screen==="squads")return Squads();
+  if(A.screen==="groups")return Groups();
+  if(A.screen==="profile")return Profile();
+  return Home();
+}
+
+function NavBar(){
+  const tabs=[["home","&#127951;","Matches",false],["boards","&#127942;","Rankings",false],["squads","&#128113;","Squads",false],["groups","&#129309;","Groups",A.grpBadge>0],["profile","&#128100;","Profile",false]];
+  return`<div class="nav">${tabs.map(([id,ic,l,badge])=>`<button class="nb ${A.screen===id?"on":""}" onclick="nav('${id}')">
+    <span class="ni">${ic}</span><span class="nl">${l}</span>
+    ${badge?`<div class="bdg"></div>`:""}
+  </button>`).join("")}</div>`;
+}
+
+/* ══ HOME ══ */
+function Home(){
+  const past=SCH.filter(m=>m.status==="past"),live=SCH.filter(m=>m.status==="live"),next=SCH.filter(m=>m.status==="next"),future=SCH.filter(m=>m.status==="future");
+  let h=`<div style="padding:0 14px">`;
+  if(A.notif)h+=`<div class="card" style="padding:11px 12px;display:flex;gap:10px;align-items:flex-start;margin-top:12px;margin-bottom:12px">
+    <div style="width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0">&#128276;</div>
+    <div style="flex:1"><div style="font-size:11px;font-weight:700;color:#eef0ff;margin-bottom:2px">dotball</div>
+    <div style="font-size:11px;color:#7a85a0;line-height:1.45">Playing XI announced. Your winning team ready?</div>
+    <div style="font-size:9px;color:#424960;margin-top:3px">Preview of the notification you'll receive</div></div>
+    <button onclick="A.notif=false;R()" style="background:transparent;border:none;color:#424960;cursor:pointer;font-size:18px;line-height:1;padding:0">&#215;</button>
+  </div>`;
+  /* Friends activity — real Firebase users */
+  if(A.actFeed.length){h+=`<div class="card" style="padding:11px 13px;margin-bottom:12px">
+    <div style="font-size:10px;font-weight:600;color:#7a85a0;margin-bottom:8px">Friends on dotball</div>
+    ${A.actFeed.slice(0,4).map(f=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+      <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;flex-shrink:0">${(f.user||"?").substring(0,2).toUpperCase()}</div>
+      <div style="flex:1;min-width:0"><span style="font-size:11px;font-weight:600;color:#eef0ff">${f.user}</span><span style="font-size:11px;color:#7a85a0"> ${f.action}</span></div>
+      <span style="font-size:9px;color:#424960;flex-shrink:0">${f.ago||""}</span>
+    </div>`).join("")}
+  </div>`;}
+  if(live.length){const lm=live[0];
+    h+=`<div onclick="A.liveSc=true;R()" style="border-radius:14px;overflow:hidden;margin-bottom:12px;cursor:pointer;border:1px solid rgba(99,102,241,.4);background:linear-gradient(150deg,${T[lm.t1].dbg},#0d0f1a,${T[lm.t2].dbg})">
+      <div style="background:linear-gradient(90deg,#6366f1,#8b5cf6);padding:6px 14px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;font-weight:600;color:#fff">How am I doing? <span style="opacity:.7;font-weight:400">Tap to see</span></span>
+        <span style="font-size:10px;font-weight:700;color:#c7d2fe">Live now</span>
+      </div>
+      <div style="padding:12px 14px;display:flex;align-items:center;gap:10px">
+        <div style="text-align:center">${Logo(lm.t1,36)}<div style="font-size:14px;font-weight:800;color:${T[lm.t1].bg};margin-top:4px">Live</div></div>
+        <div style="flex:1;text-align:center"><div style="font-size:10px;color:#7a85a0;margin-bottom:5px">Match in progress</div><div style="height:4px;border-radius:99px;background:#1c2035;overflow:hidden"><div style="height:4px;border-radius:99px;background:linear-gradient(90deg,#6366f1,#06b6d4);width:60%"></div></div><div style="font-size:9px;color:#7a85a0;margin-top:5px">Tap to see your squad points</div></div>
+        <div style="text-align:center">${Logo(lm.t2,36)}</div>
+      </div>
+    </div>`;}
+  h+=`<div style="font-size:14px;font-weight:700;color:#eef0ff;margin-bottom:2px">IPL 2026</div><div style="font-size:11px;color:#7a85a0;margin-bottom:13px">Pick a match</div>`;
+  const CB=(lbl,cnt,open,fn,col)=>`<button onclick="${fn}" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-radius:10px;border:1px solid ${col}33;background:${col}08;cursor:pointer;margin-bottom:9px">
+    <span style="font-size:11px;font-weight:600;color:${col}">${lbl}</span>
+    <div style="display:flex;align-items:center;gap:6px"><span style="font-size:9px;color:${col}aa;background:${col}18;padding:2px 8px;border-radius:99px">${cnt} match${cnt!==1?"es":""}</span><span style="color:${col}">${open?"&#9650;":"&#9660;"}</span></div>
+  </button>`;
+  if(past.length){h+=CB("Past matches",past.length,A.pastOpen,"A.pastOpen=!A.pastOpen;R()","#424960");if(A.pastOpen)past.forEach(m=>{h+=MC(m,true)});}
+  if(live.length){h+=`<div style="font-size:10px;font-weight:600;color:#6366f1;margin-bottom:7px">Live now</div>`;live.forEach(m=>{h+=MC(m)});}
+  if(next.length){h+=`<div style="font-size:10px;font-weight:600;color:#f5a623;margin-bottom:7px;margin-top:4px">Next match</div>`;next.forEach(m=>{h+=MC(m)});}
+  if(future.length){h+=CB("Upcoming matches",future.length,A.futOpen,"A.futOpen=!A.futOpen;R()","#6366f1");if(A.futOpen)future.forEach(m=>{h+=MC(m)});}
+  h+=`</div>`;return h;
+}
+
+function MC(m,dim=false){
+  const t1=T[m.t1],t2=T[m.t2],isL=m.status==="live",isN=m.status==="next",hasPR=dim&&m.res;
+  return`<div ${isL?`onclick="A.liveCt=true;R()"`:""}
+    style="border-radius:14px;overflow:hidden;margin-bottom:10px;border:${isL?"1.5px solid rgba(99,102,241,.4)":"1px solid #1c2035"};background:linear-gradient(135deg,${t1.dbg} 0%,#111421 50%,${t2.dbg} 100%);cursor:${isL?"pointer":"default"}">
+    ${isL?`<div style="background:linear-gradient(90deg,#6366f1,#8b5cf6);padding:5px 13px;font-size:10px;font-weight:600;color:#fff">Live now &mdash; tap for scorecard</div>`:""}
+    ${hasPR?`<div style="background:#0d0f1a;padding:4px 13px;font-size:9px;color:#22c55e;font-weight:600">${m.res.winner} won by ${m.res.margin}</div>`:""}
+    ${dim&&!hasPR?`<div style="background:#0d0f1a;padding:3px 13px;font-size:9px;color:#424960">Completed</div>`:""}
+    <div style="padding:11px 13px 10px">
+      <div style="display:flex;align-items:center;margin-bottom:10px">
+        <div style="text-align:center;width:72px">${Logo(m.t1,44)}</div>
+        <div style="flex:1;text-align:center">
+          <div style="font-size:9px;color:#7a85a0;margin-bottom:3px">${m.day} ${m.date} &middot; ${m.time}</div>
+          ${isL?`<div style="font-size:13px;font-weight:800;color:#eef0ff">Live <span style="font-size:10px;color:#7a85a0;font-weight:400">in progress</span></div>`:hasPR?`<div style="font-size:12px;font-weight:800;color:#eef0ff">${m.res.t1s} <span style="color:#424960;font-weight:400">vs</span> ${m.res.t2s}</div>`:`<div style="font-size:18px;font-weight:800;color:#eef0ff">vs</div>`}
+          <div style="font-size:8px;color:#424960;margin-top:2px">${m.venue}</div>
+          ${!isL&&!dim&&m.lock?`<div style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:3px 9px;border-radius:99px;background:${isN?"#f59e0b18":"#1c2035"};border:1px solid ${isN?"#f59e0b44":"#1c2035"}">
+            <span style="font-size:8px;color:${isN?"#f5a623":"#7a85a0"}" ${isN?`class="blink"`:""}">&#9679;</span>
+            <span style="font-size:9px;font-weight:600;color:${isN?"#f5a623":"#7a85a0"}">Locks in ${m.lock}</span>
+          </div>`:""}
+          ${!isL&&!dim?`<div style="margin-top:6px"><button onclick="event.stopPropagation();A.showPre='${m.id}';R()" style="font-size:9px;color:#818cf8;background:#6366f118;border:1px solid #6366f133;padding:2px 8px;border-radius:6px;cursor:pointer">Pre-match analysis</button></div>`:""}
+        </div>
+        <div style="text-align:center;width:72px">${Logo(m.t2,44)}</div>
+      </div>
+      <div style="display:flex;gap:7px">
+        ${dim?`<div style="flex:1;padding:10px;border-radius:9px;background:#1c2035;text-align:center;font-size:11px;color:#424960;font-weight:600">Match completed</div>`
+        :`<button onclick="event.stopPropagation();openXI('${m.id}')" style="flex:2;padding:10px;border-radius:9px;border:none;background:#6366f1;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Classic XI</button>
+        <button onclick="event.stopPropagation();openR3('${m.id}')" style="flex:1;padding:10px;border-radius:9px;border:1.5px solid #06b6d4;background:transparent;color:#06b6d4;font-weight:700;font-size:12px;cursor:pointer">Top 3</button>`}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ══ PRE MATCH ══ */
+function PreMatch(){
+  const m=SCH.find(x=>x.id===A.showPre)||SCH[2];
+  return`<div class="backdrop" onclick="A.showPre=null;R()"><div class="sheet" onclick="event.stopPropagation()">
+    <div class="drag"></div>
+    <div style="font-size:14px;font-weight:700;color:#eef0ff;margin-bottom:2px">Pre-match analysis</div>
+    <div style="font-size:11px;color:#7a85a0;margin-bottom:14px">${m.t1} vs ${m.t2} &middot; ${m.day} ${m.date} &middot; ${m.venue}</div>
+    <div class="card" style="padding:12px 13px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:600;color:#818cf8;margin-bottom:6px">Pitch report</div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        ${[["Batting","Good"],["Pace","Moderate"],["Spin","Low"]].map(([l,v])=>`<div style="flex:1;background:#0d0f1a;border-radius:8px;padding:7px 5px;text-align:center;border:1px solid #1c2035"><div style="font-size:11px;font-weight:700;color:#eef0ff">${v}</div><div style="font-size:8px;color:#424960">${l}</div></div>`).join("")}
+      </div>
+      <div style="font-size:10px;color:#7a85a0;line-height:1.5">Flat surface expected. High first-innings scores likely. Batters take note.</div>
+    </div>
+    <div class="card" style="padding:12px 13px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:600;color:#818cf8;margin-bottom:6px">Weather forecast</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="font-size:28px">&#9728;&#65039;</div>
+        <div><div style="font-size:13px;font-weight:700;color:#eef0ff">Clear &middot; 27&deg;C</div><div style="font-size:10px;color:#7a85a0">No rain expected &middot; Good visibility</div></div>
+      </div>
+    </div>
+    <div class="card" style="padding:12px 13px;margin-bottom:16px">
+      <div style="font-size:10px;font-weight:600;color:#818cf8;margin-bottom:8px">Head to head &middot; last 5</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="text-align:center;flex:1">${Logo(m.t1,36)}<div style="font-size:18px;font-weight:900;color:${T[m.t1].bg};margin-top:4px">3</div><div style="font-size:9px;color:#7a85a0">wins</div></div>
+        <div style="text-align:center;flex:1"><div style="font-size:10px;color:#424960;margin-bottom:6px">Last 5</div><div style="display:flex;gap:3px;justify-content:center">${["W","W","L","W","L"].map(r=>`<div style="width:18px;height:18px;border-radius:4px;background:${r==="W"?T[m.t1].bg+"22":"#1c2035"};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:${r==="W"?T[m.t1].bg:"#424960"}">${r}</div>`).join("")}</div></div>
+        <div style="text-align:center;flex:1">${Logo(m.t2,36)}<div style="font-size:18px;font-weight:900;color:${T[m.t2].bg};margin-top:4px">2</div><div style="font-size:9px;color:#7a85a0">wins</div></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="A.showPre=null;openXI('${m.id}')" style="flex:2;padding:12px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Pick Classic XI</button>
+      <button onclick="A.showPre=null;R()" style="flex:1;padding:12px;border-radius:10px;border:1px solid #1c2035;background:transparent;color:#7a85a0;cursor:pointer;font-size:12px">Close</button>
+    </div>
+  </div></div>`;
+}
+
+/* ══ XI BUILDER ══ */
+function XI(){
+  const m=A.match;if(!m)return"";
+  const all=[...(SQ[m.t1]||[]).map(p=>({...p,team:m.t1})),...(SQ[m.t2]||[]).map(p=>({...p,team:m.t2}))];
+  const flt=all.filter(p=>(A.xiF==="ALL"||p.team===A.xiF)&&(A.xiR==="ALL"||p.r===A.xiR)&&(!A.xiQ||p.n.toLowerCase().includes(A.xiQ.toLowerCase())));
+  const spent=creditSum(A.sel),rem=Math.round((100-spent)*10)/10;
+  const rc={WK:0,BAT:0,AR:0,BOWL:0};A.sel.forEach(p=>rc[p.r]++);
+
+  if(A.step==="done"){
+    /* Show existing challenge if user has one, otherwise prompt to create */
+    const existingCh=A.challenges.length?A.challenges[0]:null;
+    return`<div style="padding:12px 12px 0">
+    <div style="border-radius:16px;padding:18px;background:linear-gradient(135deg,#0c1040,#1a0f30);border:1px solid #6366f144;margin-bottom:14px;text-align:center">
+      <div style="font-size:38px">&#127881;</div>
+      <div style="font-size:19px;font-weight:700;color:#eef0ff;margin-top:4px">Squad locked!</div>
+      <div style="font-size:11px;color:#22c55e;margin-top:3px">Hidden from everyone until first ball</div>
+      <div style="display:flex;gap:5px;justify-content:center;margin-top:10px">
+        ${[{v:A.sel.filter(p=>p.team===m.t1).length,l:m.t1,c:T[m.t1].bg},{v:A.sel.filter(p=>p.team===m.t2).length,l:m.t2,c:T[m.t2].bg},{v:spent.toFixed(1),l:"cr",c:"#f5a623"}].map(x=>`<div style="background:#ffffff0a;border-radius:9px;padding:6px 12px;text-align:center"><div style="font-size:13px;font-weight:800;color:${x.c}">${x.v}</div><div style="font-size:9px;color:#7a85a0">${x.l}</div></div>`).join("")}
+      </div>
+    </div>
+    <div style="border-radius:12px;padding:11px 13px;background:#0c1a0c;border:1px solid #22c55e33;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:600;color:#22c55e;margin-bottom:7px">Your squad breakdown</div>
+      ${[{n:m.t1,cnt:A.sel.filter(p=>p.team===m.t1).length},{n:m.t2,cnt:A.sel.filter(p=>p.team===m.t2).length}].map(t=>`<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:10px;color:#eef0ff;width:80px;flex-shrink:0">${t.n}</span>
+        <div style="flex:1;height:4px;border-radius:99px;background:#1c2035;overflow:hidden"><div style="height:4px;border-radius:99px;background:#6366f1;width:${Math.round(t.cnt/11*100)}%"></div></div>
+        <span style="font-size:9px;font-weight:600;color:#818cf8;min-width:40px;text-align:right">${t.cnt} players</span>
+      </div>`).join("")}
+      <div style="font-size:9px;color:#424960;margin-top:4px">Ownership % revealed after first ball is bowled</div>
+    </div>
+    ${existingCh?`<div class="card" style="padding:13px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:600;color:#7a85a0;margin-bottom:6px">Your challenge group</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="font-size:13px;font-weight:700;color:#eef0ff">${existingCh.name}</div>
+        <span style="font-size:9px;color:#7a85a0">${existingCh.members?.length||1} members</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="font-size:22px;font-weight:900;letter-spacing:5px;font-family:Georgia,serif;color:#f5a623">${existingCh.code}</div>
+      </div>
+      <div style="font-size:10px;color:#424960;margin-bottom:8px">Share this code so friends join YOUR group</div>
+      <button onclick="A.shCode={w:'${existingCh.code}'};A.showSh=true;A.shDef=false;A.copied=false;R()" style="width:100%;padding:10px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Share challenge code</button>
+    </div>`
+    :`<div class="card" style="padding:13px;margin-bottom:12px;text-align:center">
+      <div style="font-size:11px;color:#7a85a0;margin-bottom:8px">Create a challenge group to compete with friends</div>
+      <button onclick="nav('groups')" style="padding:10px 20px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Go to Groups</button>
+    </div>`}
+    ${A.sel.map(p=>`<div style="display:flex;align-items:center;gap:7px;padding:7px 10px;border-radius:9px;background:#111421;border:1px solid ${T[p.team].bg}44;margin-bottom:4px">
+      ${Logo(p.team,22)}<div style="flex:1;font-size:11px;font-weight:600;color:#eef0ff">${p.n}</div>
+      ${A.C?.id===p.id?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:#f59e0b;color:#000;font-weight:800">C</span>`:""}
+      ${A.VC?.id===p.id?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:#818cf8;color:#fff;font-weight:800">VC</span>`:""}
+      ${A.IP1?.id===p.id?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:#34d399;color:#000;font-weight:800">IP1</span>`:""}
+      ${A.IP2?.id===p.id?`<span style="font-size:8px;padding:1px 5px;border-radius:3px;background:#34d399;color:#000;font-weight:800">IP2</span>`:""}
+      <span style="font-size:11px;font-weight:700;color:#f5a623">${(CR[p.id]||7).toFixed(1)}</span>
+    </div>`).join("")}
+    <div style="display:flex;gap:8px;margin-top:12px;padding-bottom:12px">
+      <button onclick="A.step='pick';A.sel=[];A.C=A.VC=A.IP1=A.IP2=null;R()" style="flex:1;padding:11px;border-radius:11px;border:1px solid #1c2035;background:transparent;color:#7a85a0;cursor:pointer;font-size:12px">Edit</button>
+      <button id="sav-xi" onclick="savXI()" style="flex:1;padding:11px;border-radius:11px;border:1px solid #1c2035;background:transparent;color:#7a85a0;cursor:pointer;font-size:12px">Save this squad</button>
+    </div>
+  </div>`;}
+
+  if(A.step==="roles")return`<div style="padding:12px 12px 0">
+    <div style="font-size:14px;font-weight:700;color:#eef0ff;margin-bottom:2px">Assign roles</div>
+    <div style="font-size:11px;color:#7a85a0;margin-bottom:12px">C = 2&times; &middot; VC = 1.5&times; &middot; IP1 &amp; IP2 = Impact subs (one per team)</div>
+    ${A.sel.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:11px;background:#111421;border:1px solid #1c2035;margin-bottom:6px">
+      ${Logo(p.team,26)}<div style="flex:1"><div style="font-size:11px;font-weight:600;color:#eef0ff">${p.n}</div>
+      <span style="font-size:8px;padding:1px 5px;border-radius:99px;background:${RC[p.r]}18;color:${RC[p.r]};border:1px solid ${RC[p.r]}30">${p.r}</span></div>
+      <button onclick="setC('${p.id}')" style="width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-weight:800;font-size:9px;background:${A.C?.id===p.id?"#f59e0b":"#1c2035"};color:${A.C?.id===p.id?"#000":"#424960"}">C</button>
+      <button onclick="setVC('${p.id}')" style="width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-weight:800;font-size:9px;background:${A.VC?.id===p.id?"#818cf8":"#1c2035"};color:${A.VC?.id===p.id?"#fff":"#424960"}">VC</button>
+      <button onclick="setIP('${p.id}')" style="width:28px;height:28px;border-radius:7px;border:none;cursor:pointer;font-weight:800;font-size:8px;background:${A.IP1?.id===p.id||A.IP2?.id===p.id?"#34d399":"#1c2035"};color:${A.IP1?.id===p.id||A.IP2?.id===p.id?"#000":"#424960"}">${A.IP1?.id===p.id?"IP1":A.IP2?.id===p.id?"IP2":"IP"}</button>
+    </div>`).join("")}
+    <button onclick="lockXI()" ${A.C&&A.VC&&A.IP1&&A.IP2?"":"disabled"} style="width:100%;padding:13px;border-radius:12px;border:none;font-weight:700;font-size:13px;cursor:${A.C&&A.VC&&A.IP1&&A.IP2?"pointer":"not-allowed"};background:${A.C&&A.VC&&A.IP1&&A.IP2?"#6366f1":"#1e293b"};color:${A.C&&A.VC&&A.IP1&&A.IP2?"#fff":"#475569"};margin-top:4px">
+      ${A.C&&A.VC&&A.IP1&&A.IP2?"Lock squad":"Need: "+[!A.C&&"Captain",!A.VC&&"Vice-Captain",!A.IP1&&"Impact Player 1",!A.IP2&&"Impact Player 2"].filter(Boolean).join(", ")}
+    </button>
+  </div>`;
+
+  return`<div style="padding:12px 12px 0">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <button onclick="back()" style="background:transparent;border:none;color:#6366f1;font-size:12px;cursor:pointer;padding:0">&#8592; Matches</button>
+      <div style="display:flex;align-items:center;gap:5px">${Logo(m.t1,18)}<span style="font-size:11px;font-weight:700;color:#eef0ff">${m.t1}</span><span style="color:#424960;font-size:9px">vs</span><span style="font-size:11px;font-weight:700;color:#eef0ff">${m.t2}</span>${Logo(m.t2,18)}</div>
+      <div style="font-size:9px;color:#818cf8;background:#1c2035;padding:4px 8px;border-radius:7px">100 cr</div>
+    </div>
+    ${A.savedXI&&!A.copXI?`<div style="border-radius:11px;padding:10px 12px;background:#1c1040;border:1px solid #6366f144;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:600;color:#a5b4fc;margin-bottom:3px">Load your saved squad?</div>
+      <div style="font-size:10px;color:#7a85a0;margin-bottom:8px">${A.savedXI.players.length} players saved &mdash; load and tweak.</div>
+      <div style="display:flex;gap:7px"><button onclick="ldXI()" style="flex:2;padding:8px;border-radius:9px;border:none;background:#6366f1;color:#fff;font-weight:700;font-size:10px;cursor:pointer">Load squad</button><button onclick="A.copXI=true;R()" style="flex:1;padding:8px;border-radius:9px;border:1px solid #1c2035;background:transparent;color:#7a85a0;font-size:10px;cursor:pointer">Start fresh</button></div>
+    </div>`:""}
+    <div class="card" style="padding:9px 12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:10px;font-weight:600;color:#7a85a0">Credits</span>
+        <span style="font-size:11px;font-weight:700"><span style="color:${rem<10?"#f87171":"#22c55e"}">${spent.toFixed(1)}</span><span style="color:#424960"> / 100</span><span style="font-size:9px;color:#424960;margin-left:4px">(${rem.toFixed(1)} left)</span></span>
+      </div>
+      <div style="height:5px;border-radius:99px;background:#1c2035;overflow:hidden"><div style="height:5px;border-radius:99px;width:${Math.min(100,spent)}%;transition:width .3s;background:${rem<10?"linear-gradient(90deg,#ef4444,#f97316)":"linear-gradient(90deg,#6366f1,#06b6d4)"}"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:4px">
+        <div>${Object.entries(rc).map(([r,c])=>`<span style="font-size:8px;padding:1px 5px;border-radius:99px;background:${RC[r]}18;color:${RC[r]};margin-right:3px">${r}: ${c}</span>`).join("")}</div>
+        <span style="font-size:9px;color:#424960">${A.sel.length} / 11</span>
+      </div>
+    </div>
+    ${A.sel.length===0?`<button onclick="autoPick()" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #f59e0b44;background:#f59e0b08;color:#f5a623;font-weight:700;font-size:12px;cursor:pointer;margin-bottom:8px">&#9889; Auto Pick XI (based on recent form)</button>`:``}
+    ${A.sel.length?`<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px">${A.sel.map(p=>`<div onclick="remP('${p.id}')" style="display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:7px;font-size:10px;font-weight:600;margin:2px;cursor:pointer;background:${T[p.team].bg}22;border:1px solid ${T[p.team].bg}55;color:${T[p.team].bg}">${p.n.split(" ")[0]} <span style="opacity:.6">&times;</span></div>`).join("")}</div>`:""}
+    <div style="display:flex;gap:5px;margin-bottom:7px">
+      ${["ALL",m.t1,m.t2].map(v=>`<button onclick="A.xiF='${v}';R()" style="flex:1;padding:5px 3px;border-radius:9px;border:none;cursor:pointer;font-size:10px;font-weight:600;background:${A.xiF===v?"#6366f1":"#0d0f1a"};color:${A.xiF===v?"#fff":"#7a85a0"}">${v}</button>`).join("")}
+      <select onchange="A.xiR=this.value;R()" style="flex:1;padding:5px;border-radius:9px;border:1px solid #1c2035;background:#0d0f1a;color:#7a85a0;font-size:10px">
+        ${["ALL","WK","BAT","AR","BOWL"].map(v=>`<option value="${v}" ${A.xiR===v?"selected":""}>${v}</option>`).join("")}
+      </select>
+    </div>
+    <input id="xi-search" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid #1c2035;background:#0d0f1a;color:#eef0ff;font-size:11px;outline:none;margin-bottom:8px;font-family:inherit" value="${A.xiQ}" oninput="A.xiQ=this.value;R()" placeholder="Search player...">
+    <div id="player-list" style="max-height:275px;overflow-y:auto">
+      ${flt.map(p=>{const sel=A.sel.some(s=>s.id===p.id),cr=CR[p.id]||7;const dis=!sel&&(A.sel.length>=11||cr>rem+.01||A.sel.filter(s=>s.team===p.team).length>=6);const tc=T[p.team];
+        return`<div onclick="togP('${p.id}')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:11px;margin-bottom:5px;cursor:${dis&&!sel?"not-allowed":"pointer"};border:${sel?"1.5px":"1px"} solid ${sel?tc.bg+"66":"#1c2035"};background:${sel?tc.bg+"18":"#111421"};opacity:${dis&&!sel?.3:1}">
+          ${Logo(p.team,32)}<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;flex-wrap:wrap"><span style="font-size:12px;font-weight:600;color:#eef0ff">${p.n}</span>${p.c!=="IN"?`<span style="font-size:9px;color:#424960;margin-left:3px">[${p.c}]</span>`:""}${fTag(p.form||"")}</div>
+          <span style="font-size:8px;padding:1px 5px;border-radius:99px;background:${RC[p.r]}18;color:${RC[p.r]};border:1px solid ${RC[p.r]}30">${p.r}</span></div>
+          <div style="font-size:13px;font-weight:700;color:${sel?tc.bg:"#f5a623"}">${cr.toFixed(1)}</div>
+          <div id="pb${p.id}" style="width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:1.5px solid ${sel?tc.bg+"88":"#1c2035"};background:${sel?tc.bg:"#1c2035"};color:${sel?"#fff":"#424960"};transition:transform .15s cubic-bezier(.34,1.56,.64,1)">${sel?"&#10003;":"+"}</div>
+        </div>`;}).join("")}
+    </div>
+    <button onclick="gRoles()" ${A.sel.length===11?"":"disabled"} style="width:100%;margin-top:10px;padding:13px;border-radius:12px;border:none;font-weight:700;font-size:13px;cursor:${A.sel.length===11?"pointer":"not-allowed"};background:${A.sel.length===11?"#6366f1":"#1e293b"};color:${A.sel.length===11?"#fff":"#475569"}">
+      ${A.sel.length<11?`Pick ${11-A.sel.length} more`:"Assign roles"}
+    </button>
+  </div>`;
+}
+
+/* ══ R3 ══ */
+function R3(){
+  const m=A.match;if(!m)return"";
+  const all=[...(SQ[m.t1]||[]).map(p=>({...p,team:m.t1})),...(SQ[m.t2]||[]).map(p=>({...p,team:m.t2}))];
+  const flt=all.filter(p=>(A.r3F==="ALL"||p.team===A.r3F)&&(!A.r3Q||p.n.toLowerCase().includes(A.r3Q.toLowerCase())));
+  if(A.done3){
+    const existingCh=A.challenges.length?A.challenges[0]:null;
+    return`<div style="padding:12px 12px 0;text-align:center">
+    <div style="font-size:38px;margin-bottom:6px">&#127881;</div>
+    <div style="font-size:19px;font-weight:700;color:#eef0ff">Top 3 locked!</div>
+    <div style="font-size:10px;color:#22c55e;margin-bottom:4px">Hidden until first ball</div>
+    <div style="font-size:10px;color:#7a85a0;margin-bottom:16px">1 run = 1 point &middot; no bonuses</div>
+    ${A.squad3.map((p,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:13px;margin-bottom:8px;background:#111421;border:2px solid ${T[p.team].bg}66;text-align:left">
+      <div style="width:22px;height:22px;border-radius:50%;background:#1c2035;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#f5a623;flex-shrink:0">${i+1}</div>
+      ${Logo(p.team,34)}<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#eef0ff">${p.n}</div>
+      <span style="font-size:8px;padding:1px 5px;border-radius:99px;background:${RC[p.r]}18;color:${RC[p.r]};border:1px solid ${RC[p.r]}30">${p.r}</span></div>
+      <div style="font-size:12px;font-weight:700;color:#06b6d4">${(CR[p.id]||7).toFixed(1)} cr</div>
+    </div>`).join("")}
+    ${existingCh?`<div class="card" style="padding:13px;margin-bottom:14px;text-align:left">
+      <div style="font-size:10px;font-weight:600;color:#7a85a0;margin-bottom:6px">Share your challenge</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="font-size:22px;font-weight:900;letter-spacing:5px;font-family:Georgia,serif;color:#f5a623">${existingCh.code}</div>
+      </div>
+      <button onclick="A.shCode={w:'${existingCh.code}'};A.showSh=true;A.shDef=false;A.copied=false;R()" style="width:100%;padding:10px;border-radius:10px;border:none;background:#06b6d4;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Share challenge code</button>
+    </div>`
+    :`<div class="card" style="padding:13px;margin-bottom:14px;text-align:center">
+      <div style="font-size:11px;color:#7a85a0;margin-bottom:8px">Create a challenge to compete with friends</div>
+      <button onclick="nav('groups')" style="padding:10px 20px;border-radius:10px;border:none;background:#06b6d4;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Go to Groups</button>
+    </div>`}
+    <div style="display:flex;gap:8px;padding-bottom:12px">
+      <button onclick="A.done3=false;A.squad3=[];R()" style="flex:1;padding:11px;border-radius:11px;border:1px solid #1c2035;background:transparent;color:#7a85a0;cursor:pointer;font-size:12px">Edit</button>
+      <button id="sav-r3" onclick="savR3()" style="flex:1;padding:11px;border-radius:11px;border:1px solid #1c2035;background:transparent;color:#7a85a0;cursor:pointer;font-size:12px">Save this squad</button>
+    </div>
+  </div>`;}
+  return`<div style="padding:12px 12px 0">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <button onclick="back()" style="background:transparent;border:none;color:#6366f1;font-size:11px;cursor:pointer;padding:0">&#8592; Matches</button>
+      <div style="display:flex;gap:5px;align-items:center">${Logo(m.t1,16)}<span style="font-size:10px;font-weight:700;color:#eef0ff">${m.t1}</span><span style="color:#424960;font-size:9px">vs</span><span style="font-size:10px;font-weight:700;color:#eef0ff">${m.t2}</span>${Logo(m.t2,16)}</div>
+      <div style="font-size:9px;color:#06b6d4;background:#0c1a2c;padding:3px 7px;border-radius:7px;border:1px solid #0e7490">1 run = 1 pt</div>
+    </div>
+    <div style="border-radius:12px;padding:10px 13px;background:#0c1040;border:1px solid #6366f133;margin-bottom:12px">
+      <div style="font-size:12px;font-weight:700;color:#eef0ff;margin-bottom:2px">Top 3 &mdash; Predict your top 3 run scorers</div>
+      <div style="font-size:10px;color:#7a85a0">Pick 3 batters &middot; max 2 from same team</div>
+    </div>
+    <div style="display:flex;gap:7px;margin-bottom:10px">
+      ${[0,1,2].map(i=>{const p=A.squad3[i];return`<div onclick="${p?`remR3(${i})`:"return"}" style="flex:1;border-radius:11px;padding:9px 4px;text-align:center;cursor:${p?"pointer":"default"};background:${p?T[p.team].bg+"22":"#111421"};border:${p?`2px solid ${T[p.team].bg}66`:"1.5px dashed #1c2035"}">
+        ${p?`${Logo(p.team,22)}<div style="font-size:9px;font-weight:700;color:${T[p.team].bg};margin-top:3px">${p.n.split(" ")[0]}</div><div style="font-size:7px;color:#424960">tap to remove</div>`:`<div style="font-size:9px;color:#424960;padding-top:6px">Slot ${i+1}</div>`}
+      </div>`}).join("")}
+    </div>
+    <div style="display:flex;gap:5px;margin-bottom:7px">
+      ${["ALL",m.t1,m.t2].map(v=>`<button onclick="A.r3F='${v}';R()" style="flex:1;padding:5px 3px;border-radius:9px;border:none;cursor:pointer;font-size:10px;font-weight:600;background:${A.r3F===v?"#06b6d4":"#0d0f1a"};color:${A.r3F===v?"#fff":"#7a85a0"}">${v}</button>`).join("")}
+    </div>
+    <input id="r3-search" style="width:100%;padding:8px 10px;border-radius:9px;border:1px solid #1c2035;background:#0d0f1a;color:#eef0ff;font-size:11px;outline:none;margin-bottom:8px;font-family:inherit" value="${A.r3Q}" oninput="A.r3Q=this.value;R()" placeholder="Search batter...">
+    <div id="player-list" style="max-height:290px;overflow-y:auto">
+      ${flt.map(p=>{const sel=A.squad3.some(s=>s&&s.id===p.id);const dis=!sel&&(A.squad3.length>=3||A.squad3.filter(s=>s&&s.team===p.team).length>=2);const tc=T[p.team];
+        return`<div onclick="togR3('${p.id}')" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:11px;margin-bottom:5px;cursor:${dis&&!sel?"not-allowed":"pointer"};border:${sel?"1.5px":"1px"} solid ${sel?tc.bg+"66":"#1c2035"};background:${sel?tc.bg+"18":"#111421"};opacity:${dis&&!sel?.3:1}">
+          ${Logo(p.team,32)}<div style="flex:1;min-width:0"><div style="display:flex;align-items:center"><span style="font-size:12px;font-weight:600;color:#eef0ff">${p.n}</span>${fTag(p.form||"")}</div></div>
+          <div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:1.5px solid ${sel?tc.bg+"88":"#1c2035"};background:${sel?tc.bg:"#1c2035"};color:${sel?"#fff":"#424960"}">${sel?"&#10003;":"+"}</div>
+        </div>`;}).join("")}
+    </div>
+    ${A.squad3.length===3?`<button onclick="lockR3()" style="width:100%;margin-top:10px;padding:13px;border-radius:12px;border:none;background:#06b6d4;color:#fff;font-weight:700;font-size:14px;cursor:pointer">Lock in my Top 3</button>`:""}
+  </div>`;
+}
+
+/* ══ LEADERBOARD ══ */
+function LB(){
+  const tab=A.lbTab;
+  const rows=A.lbRows;
+  const season=A.lbSeason;
+  return`<div style="padding:12px 12px 0">
+    <div style="display:flex;gap:5px;margin-bottom:12px;background:#111421;padding:4px;border-radius:11px;border:1px solid #1c2035">
+      <button onclick="A.lbTab='xi';R()" style="flex:1;padding:9px;border-radius:9px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:${tab==="xi"?"#6366f1":"transparent"};color:${tab==="xi"?"#fff":"#7a85a0"}">Classic XI</button>
+      <button onclick="A.lbTab='r3';R()" style="flex:1;padding:9px;border-radius:9px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:${tab==="r3"?"#06b6d4":"transparent"};color:${tab==="r3"?"#fff":"#7a85a0"}">Top 3</button>
+      <button onclick="A.lbTab='season';R()" style="flex:1;padding:9px;border-radius:9px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:${tab==="season"?"#f59e0b":"transparent"};color:${tab==="season"?"#000":"#7a85a0"}">Season</button>
+    </div>
+    <div class="card" style="padding:9px 11px;margin-bottom:12px;font-size:10px;color:#7a85a0;line-height:1.7">
+      ${tab==="xi"?`<span style="color:#818cf8;font-weight:600">Classic XI &mdash; </span>Points from batting, bowling, fielding, economy &amp; strike rate.`
+      :tab==="r3"?`<span style="color:#06b6d4;font-weight:600">Top 3 &mdash; </span>Total runs from your 3 predicted run scorers. 1 run = 1 point.`
+      :`<span style="color:#f5a623;font-weight:600">Season &mdash; </span>Cumulative Classic XI points across all 74 matches of IPL 2026.`}
+    </div>
+    ${(tab==="season"?season:rows).length===0?`<div class="card" style="padding:28px 16px;text-align:center;margin-bottom:14px">
+      <div style="font-size:32px;margin-bottom:8px">&#127942;</div>
+      <div style="font-size:13px;font-weight:700;color:#eef0ff;margin-bottom:4px">No rankings yet</div>
+      <div style="font-size:11px;color:#7a85a0;line-height:1.5">Rankings appear once match squads are revealed after the first ball. Pick your squad now!</div>
+    </div>`
+    :tab==="season"?season.map((u,i)=>`<div style="display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:13px;margin-bottom:7px;background:${u.isMe?"#1a1400":"#111421"};border:${u.isMe?"1.5px solid #f59e0b":"1px solid #1c2035"}">
+      <div style="font-size:${i<3?19:12}px;width:26px;text-align:center;flex-shrink:0">${i===0?"&#127945;":i===1?"&#127946;":i===2?"&#127947;":`#${i+1}`}</div>
+      <div style="flex:1"><div style="font-size:12px;font-weight:700;color:#eef0ff">${u.name}${u.isMe?`<span style="font-size:9px;color:#f5a623;background:#f59e0b18;padding:1px 5px;border-radius:4px;margin-left:4px">You</span>`:""}</div><div style="font-size:10px;color:#424960">${u.matches} matches played</div></div>
+      <div style="font-size:16px;font-weight:900;color:${u.total?"#f5a623":"#1c2035"}">${u.total||"&mdash;"}</div>
+    </div>`).join("")
+    :rows.map((u,i)=>`<div style="display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:13px;margin-bottom:7px;background:${u.isMe?"#1c1040":"#111421"};border:${u.isMe?"1.5px solid #6366f1":i===0?"1.5px solid #f5a62344":"1px solid #1c2035"}">
+      <div style="font-size:${i<3?19:12}px;width:26px;text-align:center;flex-shrink:0">${i===0?"&#127945;":i===1?"&#127946;":i===2?"&#127947;":`#${i+1}`}</div>
+      <div style="width:34px;height:34px;border-radius:50%;background:${u.isMe?"#312e81":"#1c2035"};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${u.isMe?"#c7d2fe":"#7a85a0"};border:${u.isMe?"2px solid #6366f1":"1px solid #1c2035"};flex-shrink:0">${u.name.substring(0,2).toUpperCase()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:#eef0ff">${u.name}${u.isMe?`<span style="font-size:9px;color:#818cf8;background:#312e81;padding:1px 5px;border-radius:4px;margin-left:4px">You</span>`:""}</div>
+        <div style="display:flex;gap:5px;margin-top:2px"><span>&#127945;${u.gold||0}</span><span>&#127946;${u.silver||0}</span><span>&#127947;${u.bronze||0}</span></div>
+      </div>
+      <div style="text-align:right"><div style="font-size:16px;font-weight:900;color:${u.points?"#eef0ff":"#1c2035"}">${u.points||"&mdash;"}</div>${u.points?`<div style="font-size:8px;color:#7a85a0">${tab==="r3"?"runs":"pts"}</div>`:""}</div>
+    </div>`).join("")}
+  </div>`;
+}
+
+/* ══ SQUADS ══ */
+function Squads(){
+  const t=T[A.sqTm];const ps=SQ[A.sqTm]||[];const sh=A.sqR==="ALL"?ps:ps.filter(p=>p.r===A.sqR);
+  return`<div style="padding:12px 12px 0">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:12px">
+      ${Object.keys(T).map(k=>`<button onclick="A.sqTm='${k}';A.sqR='ALL';R()" style="padding:6px 2px;border-radius:9px;border:${A.sqTm===k?`2px solid ${T[k].bg}aa`:"1px solid #1c2035"};background:${A.sqTm===k?T[k].bg+"18":"#111421"};cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px">
+        ${Logo(k,26)}</button>`).join("")}
+    </div>
+    <div style="border-radius:13px;padding:11px 13px;margin-bottom:10px;background:linear-gradient(135deg,${t.dbg},#111421);border:1px solid ${t.bg}44;display:flex;gap:10px;align-items:center">
+      ${Logo(A.sqTm,44)}<div style="flex:1"><div style="font-size:13px;font-weight:800;color:#eef0ff">${t.name}</div><div style="font-size:10px;color:#7a85a0">Captain: ${ps.find(p=>p.cap)?.n||"—"}</div></div>
+      <div style="text-align:right"><div style="font-size:15px;font-weight:800;color:${t.bg}">${ps.length}</div><div style="font-size:8px;color:#424960">players</div></div>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:9px">
+      ${["ALL","WK","BAT","AR","BOWL"].map(rx=>`<button onclick="A.sqR='${rx}';R()" style="padding:3px 10px;border-radius:99px;border:none;cursor:pointer;font-size:9px;font-weight:700;background:${A.sqR===rx?t.bg:"#111421"};color:${A.sqR===rx?"#fff":"#7a85a0"}">${rx==="ALL"?"All":RL[rx]}</button>`).join("")}
+    </div>
+    ${sh.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;background:#111421;border:1px solid #1c2035;margin-bottom:4px">
+      <div style="width:18px;flex-shrink:0">${p.c!=="IN"?`<span style="font-size:7px;color:#424960;border:1px solid #1c2035;padding:1px 3px;border-radius:3px">${p.c}</span>`:""}</div>
+      <div style="flex:1;font-size:11px;font-weight:600;color:#eef0ff;display:flex;align-items:center">${p.n}${fTag(p.form||"")}</div>
+      ${p.cap?`<span style="font-size:7px;padding:1px 4px;border-radius:3px;background:${t.bg}33;color:${t.bg};border:1px solid ${t.bg}55;font-weight:700">Cap</span>`:""}
+      <span style="font-size:8px;padding:1px 5px;border-radius:99px;background:${RC[p.r]}18;color:${RC[p.r]};border:1px solid ${RC[p.r]}30">${p.r}</span>
+    </div>`).join("")}
+  </div>`;
+}
+
+/* ══ GROUPS ══ */
+function Groups(){return`<div style="padding:12px 12px 0">
+  <div style="font-size:15px;font-weight:700;color:#eef0ff;margin-bottom:3px">My challenges</div>
+  <div style="font-size:11px;color:#7a85a0;margin-bottom:16px">Compete in multiple groups &mdash; same squad, picks apply everywhere.</div>
+  ${A.challenges.length?A.challenges.map(ch=>`<div class="card" style="padding:12px 13px;margin-bottom:9px;display:flex;gap:10px;align-items:flex-start">
+    <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${ch.own?"&#128081;":"&#129309;"}</div>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:700;color:#eef0ff">${ch.name}</div>
+      <div style="font-size:10px;color:#7a85a0">${ch.fmt==="xi"?"Classic XI":"Top 3"} &middot; ${ch.members?.length||1} members</div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:5px">
+        <div style="font-size:16px;font-weight:900;letter-spacing:4px;font-family:Georgia,serif;color:#f5a623">${ch.code}</div>
+        <button onclick="A.chDef=A.chDef===ch.id?null:'${ch.id}';R()" style="width:18px;height:18px;border-radius:50%;background:${A.chDef===ch.id?"#6366f1":"#0d0f1a"};border:1px solid ${A.chDef===ch.id?"#6366f1":"#1c2035"};color:${A.chDef===ch.id?"#fff":"#424960"};font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center">i</button>
+      </div>
+      ${A.chDef===ch.id?`<div style="background:#0d0f1a;border:1px solid #1c2035;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:10px;color:#818cf8;line-height:1.5"><strong style="color:#a5b4fc">${ch.code}</strong> &mdash; ${CODES.find(c=>c.w===ch.code)?.d||"A cricket term."}</div>`:""}
+    </div>
+    ${ch.own?`<span style="font-size:9px;padding:2px 7px;border-radius:99px;background:#6366f118;color:#818cf8;border:1px solid #6366f133;font-weight:700;flex-shrink:0">Owner</span>`:""}
+  </div>`).join(""):`<div class="card" style="padding:20px;text-align:center;margin-bottom:14px">
+    <div style="font-size:28px;margin-bottom:8px">&#129309;</div>
+    <div style="font-size:12px;color:#7a85a0">No challenges yet. Create one or join a friend's!</div>
+  </div>`}
+  ${!A.chMode?`<div style="display:flex;flex-direction:column;gap:8px">
+    <button onclick="A.chMode='create';R()" style="width:100%;padding:13px;border-radius:12px;border:none;background:#6366f1;color:#fff;font-weight:700;font-size:13px;cursor:pointer">+ Create a challenge</button>
+    <button onclick="A.chMode='join';R()" style="width:100%;padding:12px;border-radius:12px;border:1.5px solid #06b6d4;background:transparent;color:#06b6d4;font-weight:700;font-size:13px;cursor:pointer">Enter a code to join</button>
+  </div>`:""}
+  ${A.chMode==="create"?`<div class="card" style="padding:15px">
+    <div style="font-size:13px;font-weight:700;color:#eef0ff;margin-bottom:10px">New challenge</div>
+    <input id="chn" value="${A.chName}" oninput="A.chName=this.value" placeholder="Name (e.g. Office Mates)" style="width:100%;padding:10px 11px;border-radius:9px;border:1px solid #1c2035;background:#0d0f1a;color:#eef0ff;font-size:13px;box-sizing:border-box;outline:none;margin-bottom:10px;font-family:inherit">
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button onclick="A.chFmt='xi';R()" style="flex:1;padding:9px;border-radius:9px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:${A.chFmt!=="r3"?"#6366f1":"#0d0f1a"};color:${A.chFmt!=="r3"?"#fff":"#7a85a0"}">Classic XI</button>
+      <button onclick="A.chFmt='r3';R()" style="flex:1;padding:9px;border-radius:9px;border:none;cursor:pointer;font-size:11px;font-weight:700;background:${A.chFmt==="r3"?"#06b6d4":"#0d0f1a"};color:${A.chFmt==="r3"?"#fff":"#7a85a0"}">Top 3</button>
+    </div>
+    <div style="display:flex;gap:7px">
+      <button onclick="mkCh()" style="flex:2;padding:12px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-weight:700;font-size:12px;cursor:pointer">Create &amp; get code</button>
+      <button onclick="A.chMode=null;R()" style="flex:1;padding:12px;border-radius:10px;border:1px solid #1c2035;background:transparent;color:#7a85a0;font-size:12px;cursor:pointer">Cancel</button>
+    </div>
+  </div>`:""}
+  ${A.chMode==="join"?`<div class="card" style="padding:15px">
+    <div style="font-size:13px;font-weight:700;color:#eef0ff;margin-bottom:4px">Enter challenge code</div>
+    <div style="font-size:11px;color:#7a85a0;margin-bottom:10px">Type the cricket word your friend shared</div>
+    <input id="chc" value="${A.chCode}" oninput="A.chCode=this.value.toUpperCase()" placeholder="e.g. GOOGLY" maxlength="12" style="width:100%;padding:12px;border-radius:9px;border:1px solid #1c2035;background:#0d0f1a;color:#f5a623;font-size:20px;font-weight:800;letter-spacing:6px;text-align:center;box-sizing:border-box;outline:none;margin-bottom:10px;font-family:Georgia,serif">
+    <div style="display:flex;gap:7px">
+      <button onclick="jnCh()" style="flex:2;padding:12px;border-radius:10px;border:none;background:${A.chCode.length>=4?"#6366f1":"#1e293b"};color:${A.chCode.length>=4?"#fff":"#475569"};font-weight:700;font-size:12px;cursor:pointer">Join</button>
+      <button onclick="A.chMode=null;R()" style="flex:1;padding:12px;border-radius:10px;border:1px solid #1c2035;background:transparent;color:#7a85a0;font-size:12px;cursor:pointer">Cancel</button>
+    </div>
+  </div>`:""}
+  ${A.challenges.length>1?`<div style="border-radius:11px;padding:10px 12px;background:#6366f108;border:1px solid #6366f133;margin-top:12px;font-size:11px;color:#818cf8;line-height:1.6">Same squad, multiple groups &mdash; lock once and it counts everywhere.</div>`:""}
+</div>`;}
+
+/* ══ PROFILE ══ */
+function Profile(){
+  const av=A.avatar?`<img src="${A.avatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:`<span style="font-size:26px;font-weight:900;color:#fff">${(A.profile?.name||"?").substring(0,2).toUpperCase()}</span>`;
+  return`<div style="padding:22px 14px 0">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="position:relative;width:76px;height:76px;margin:0 auto 12px">
+        <div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;overflow:hidden;border:3px solid #6366f155">${av}</div>
+        <label for="av-up" style="position:absolute;bottom:0;right:0;width:24px;height:24px;border-radius:50%;background:#6366f1;display:flex;align-items:center;justify-content:center;cursor:pointer;border:2px solid #08090f;font-size:11px">&#9998;</label>
+        <input id="av-up" type="file" accept="image/*" style="display:none" onchange="uploadAv(this)">
+      </div>
+      <div style="font-size:18px;font-weight:700;color:#eef0ff">${A.profile?.name||"—"}</div>
+      <div style="font-size:11px;color:#7a85a0;margin-top:2px">dotball · IPL 2026</div>
+      <button onclick="editName()" style="margin-top:8px;padding:5px 14px;border-radius:99px;border:1px solid #1c2035;background:transparent;color:#7a85a0;font-size:10px;cursor:pointer">Edit display name</button>
+    </div>
+    ${(()=>{const xiC=A.savedXI?1:0;const r3C=A.savedR3?1:0;
+      return[["&#127951;","Classic XI games",xiC+" played"],["&#9889;","Top 3 games",r3C+" played"],["&#127945;","Challenges joined",""+A.challenges.length],["&#128197;","Member since","Mar 2026"]].map(([ic,k,v])=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 13px;border-radius:11px;background:#111421;border:1px solid #1c2035;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px">${ic}</span><span style="font-size:12px;color:#7a85a0">${k}</span></div>
+      <span style="font-size:12px;font-weight:700;color:#eef0ff">${v}</span>
+    </div>`).join("")})()}
+    <button onclick="notifPerm()" style="width:100%;padding:12px;border-radius:11px;border:1px solid #6366f133;background:#6366f108;color:#818cf8;cursor:pointer;font-size:12px;font-weight:600;margin-bottom:8px">&#128276; Enable match notifications</button>
+    <button onclick="doSignOut()" style="width:100%;padding:12px;border-radius:11px;border:1px solid #ef444433;background:transparent;color:#ef4444;cursor:pointer;font-size:12px;font-weight:600">Sign out</button>
+  </div>`;
+}
+
+/* ══ LIVE MODALS ══ */
+function MScore(){
+  const m=SCH.find(x=>x.status==="live");if(!m)return"";
+  const hasSquad=A.savedXI&&A.savedXI.players&&A.savedXI.players.length>0;
+  const allP=[...(SQ[m.t1]||[]).map(p=>({...p,team:m.t1})),...(SQ[m.t2]||[]).map(p=>({...p,team:m.t2}))];
+  const myPlayers=hasSquad?A.savedXI.players.map(sp=>{const f=allP.find(p=>p.id===(sp.id||sp));return f?{...f,pts:0,st:"Awaiting live data"}:null;}).filter(Boolean):[];
+  return`<div class="backdrop" onclick="A.liveSc=false;R()"><div class="sheet" onclick="event.stopPropagation()">
+    <div class="drag"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div><div style="font-size:14px;font-weight:700;color:#eef0ff">How am I doing?</div><div style="font-size:10px;color:#7a85a0">${m.t1} vs ${m.t2} &middot; Live</div></div>
+      <div style="text-align:right"><div style="font-size:16px;font-weight:900;color:#818cf8">&mdash; pts</div><div style="font-size:10px;color:#7a85a0">Live scoring</div></div>
+    </div>
+    <div style="border-radius:11px;padding:9px 12px;background:linear-gradient(135deg,${T[m.t1].dbg},#0d0f1a,${T[m.t2].dbg});border:1px solid #1c2035;margin-bottom:12px;display:flex;align-items:center;gap:10px">
+      <div style="text-align:center">${Logo(m.t1,32)}<div style="font-size:11px;font-weight:800;color:${T[m.t1].bg};margin-top:2px">${m.t1}</div></div>
+      <div style="flex:1;text-align:center"><div style="font-size:10px;color:#7a85a0">Match in progress</div><div style="height:4px;border-radius:99px;background:#1c2035;margin:5px 0;overflow:hidden"><div class="blink" style="height:4px;background:linear-gradient(90deg,#6366f1,#06b6d4);width:50%;border-radius:99px"></div></div></div>
+      <div style="text-align:center">${Logo(m.t2,32)}<div style="font-size:11px;font-weight:800;color:${T[m.t2].bg};margin-top:2px">${m.t2}</div></div>
+    </div>
+    ${hasSquad?`<div style="font-size:10px;font-weight:600;color:#424960;margin-bottom:7px">Your squad &middot; points update live</div>
+    ${myPlayers.map(p=>`<div style="display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:9px;background:#0d0f1a;border:1px solid #1c2035;margin-bottom:4px">
+      ${Logo(p.team,24)}<div style="flex:1"><div style="font-size:11px;font-weight:600;color:#eef0ff">${p.n}</div><div style="font-size:9px;color:#424960">${p.st}</div></div>
+      <div style="font-size:13px;font-weight:800;color:#1c2035">&mdash;</div>
+    </div>`).join("")}`
+    :`<div style="text-align:center;padding:20px 0;margin-bottom:8px">
+      <div style="font-size:28px;margin-bottom:6px">&#127951;</div>
+      <div style="font-size:12px;font-weight:700;color:#eef0ff;margin-bottom:3px">No squad picked yet</div>
+      <div style="font-size:11px;color:#7a85a0">Pick your Classic XI or Top 3 to track live points</div>
+    </div>`}
+    <button onclick="A.liveSc=false;R()" style="width:100%;margin-top:10px;padding:11px;border-radius:11px;border:1px solid #1c2035;background:transparent;color:#7a85a0;cursor:pointer;font-size:12px">Close</button>
+  </div></div>`;
+}
+
+function MCentre(){
+  const m=SCH.find(x=>x.status==="live");if(!m)return"";
+  return`<div class="backdrop" onclick="A.liveCt=false;R()"><div class="sheet" onclick="event.stopPropagation()">
+    <div class="drag"></div>
+    <div style="background:linear-gradient(90deg,#6366f1,#8b5cf6);border-radius:9px;padding:7px 13px;margin-bottom:13px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:10px;font-weight:600;color:#fff">Live now</span>
+      <span style="font-size:10px;color:#c7d2fe">${m.date} &middot; ${m.time}</span>
+    </div>
+    <div style="display:flex;align-items:center;margin-bottom:13px;gap:10px">
+      <div style="flex:1;text-align:center">${Logo(m.t1,50)}<div style="font-size:13px;font-weight:800;color:${T[m.t1].bg};margin-top:4px">${m.t1}</div></div>
+      <div style="text-align:center;flex:0 0 40px"><div style="font-size:14px;font-weight:700;color:#424960">vs</div></div>
+      <div style="flex:1;text-align:center">${Logo(m.t2,50)}<div style="font-size:13px;font-weight:800;color:${T[m.t2].bg};margin-top:4px">${m.t2}</div></div>
+    </div>
+    <div class="card" style="padding:16px;text-align:center;margin-bottom:12px">
+      <div style="font-size:18px;margin-bottom:6px">&#127951;</div>
+      <div style="font-size:12px;font-weight:600;color:#eef0ff;margin-bottom:3px">Match in progress</div>
+      <div style="font-size:10px;color:#7a85a0;line-height:1.5">Live scorecard will update here during the match.</div>
+    </div>
+    <div style="font-size:10px;color:#7a85a0;text-align:center;margin-bottom:12px">Squad locked &mdash; picks are frozen for this match</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="A.liveCt=false;openXI('${m.id}')" style="flex:2;padding:11px;border-radius:10px;border:none;background:#6366f1;color:#fff;font-weight:700;font-size:12px;cursor:pointer">View my Classic XI</button>
+      <button onclick="A.liveCt=false;R()" style="flex:1;padding:11px;border-radius:10px;border:1px solid #1c2035;background:transparent;color:#7a85a0;cursor:pointer;font-size:12px">Close</button>
+    </div>
+  </div></div>`;
+}
+
+function ShareSh(){
+  const ci=A.shCode||genCode();
+  return`<div class="backdrop" onclick="A.showSh=false;R()"><div class="sheet" onclick="event.stopPropagation()">
+    <div class="drag"></div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:11px;font-weight:600;color:#7a85a0;letter-spacing:.5px;margin-bottom:10px">Challenge code</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:5px">
+        <div style="font-size:30px;font-weight:900;letter-spacing:8px;font-family:Georgia,serif;color:#f5a623">${ci.w}</div>
+        <button onclick="A.shDef=!A.shDef;R()" style="width:22px;height:22px;border-radius:50%;background:${A.shDef?"#6366f1":"#0d0f1a"};border:1px solid ${A.shDef?"#6366f1":"#1c2035"};color:${A.shDef?"#fff":"#424960"};font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0">i</button>
+      </div>
+      ${A.shDef?`<div style="background:#0d0f1a;border:1px solid #1c2035;border-radius:10px;padding:10px 12px;margin-bottom:8px;text-align:left"><div style="font-size:10px;font-weight:600;color:#818cf8;margin-bottom:3px">Cricket term &middot; ${ci.w}</div><div style="font-size:12px;color:#7a85a0;line-height:1.6">${ci.d}</div></div>`:""}
+      <div style="font-size:11px;color:#7a85a0">Share this cricket word to invite friends</div>
+    </div>
+    <div style="background:#0d0f1a;border-radius:11px;padding:11px 13px;margin-bottom:13px;border:1px solid #1c2035">
+      <div style="font-size:10px;font-weight:600;color:#424960;margin-bottom:8px">What happens next</div>
+      ${[["1","Share this word via WhatsApp or copy it"],["2","Friends open dotball &rarr; Join challenge"],["3","They type this word to enter your group"],["4","Everyone picks their own squad"],["5","Squads hidden until first ball &mdash; then revealed"]].map(([n,t])=>`<div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:7px"><div style="width:18px;height:18px;border-radius:50%;background:#312e81;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#818cf8;flex-shrink:0">${n}</div><span style="font-size:11px;color:#7a85a0;line-height:1.5">${t}</span></div>`).join("")}
+    </div>
+    <button onclick="doSh()" style="width:100%;padding:13px;border-radius:12px;border:none;background:#6366f1;color:#fff;font-weight:700;font-size:13px;cursor:pointer;margin-bottom:8px">Share via WhatsApp / Messages</button>
+    <button onclick="cpCode()" style="width:100%;padding:12px;border-radius:12px;border:1px solid ${A.copied?"#22c55e":"#1c2035"};background:${A.copied?"#14532d18":"transparent"};color:${A.copied?"#86efac":"#7a85a0"};font-weight:600;font-size:12px;cursor:pointer;margin-bottom:8px;transition:all .2s">${A.copied?"Copied!":"Copy code word"}</button>
+    <button onclick="A.showSh=false;R()" style="background:transparent;border:none;color:#424960;font-size:12px;cursor:pointer;width:100%">Dismiss</button>
+  </div></div>`;
+}
+
+/* ══════════════════════════════════════════
+   FIREBASE ACTIONS
+══════════════════════════════════════════ */
+async function doSignIn(){
+  /* Legacy — now handled by doEmailLogin / doEmailSignup */
+  A.screen="auth";A.authStep="login";R();
+}
+
+async function doSignOut(){
+  try{await auth.signOut();}catch(e){}
+  localStorage.removeItem("db_name");
+  localStorage.removeItem("db_uid");
+  A.fbUser=null;A.profile=null;A.avatar=null;A.screen="ob";A.ob=0;
+  A.authStep="login";A.authEmail="";A.authPass="";A.authName="";A.authError="";A.authLoading=false;A.authBusy=false;
+  A.savedXI=null;A.savedR3=null;A.challenges=[];A.lbRows=[];A.lbSeason=[];A.actFeed=[];
+  R();
+}
+
+async function loadChallenges(){
+  if(!A.fbUser)return;
+  const uid=A.fbUser.uid;
+  try{
+    const q=query(collection(db,"challenges"),where("members","array-contains",uid));
+    const snap=await getDocs(q);
+    if(snap.docs.length>0){
+      A.challenges=snap.docs.map(d=>({id:d.id,...d.data(),own:d.data().owner===uid}));
+      R();
+    }
+  }catch(e){
+    console.log("loadChallenges (Firebase not available, using local):",e.message);
+  }
+}
+
+/* Subscribe to real-time leaderboard for a match */
+function subscribeLeaderboard(matchId){
+  try{
+    const q=query(collection(db,"squads"),where("matchId","==",matchId),where("revealed","==",true));
+    return onSnapshot(q,snap=>{
+      A.lbRows=snap.docs.map(d=>d.data()).sort((a,b)=>(b.points||0)-(a.points||0));
+      R();
+    });
+  }catch(e){return null;}
+}
+
+/* Who has joined — subscribe to users collection for live feed */
+function subscribeActivity(){
+  try{
+    const q=query(collection(db,"users"),orderBy("createdAt","desc"));
+    return onSnapshot(q,snap=>{
+      const users=snap.docs.map(d=>d.data());
+      A.actFeed=users.slice(0,5).map(u=>({
+        user:u.name||"Someone",
+        action:"joined dotball",
+        ago:"just now"
+      }));
+      R();
+    });
+  }catch(e){return null;}
+}
+
+async function savXI(){
+  const m=A.match;if(!m||!A.fbUser)return;
+  if(isMatchLocked(m)){toast("Match has started — squad is locked!",false);return;}
+  try{
+    const squadData={
+      uid:A.fbUser.uid,
+      matchId:m.id,
+      type:"xi",
+      name:A.profile?.name||"Player",
+      players:A.sel.map(p=>p.id),
+      captainId:A.C?.id||null,
+      vcId:A.VC?.id||null,
+      ip1Id:A.IP1?.id||null,
+      ip2Id:A.IP2?.id||null,
+      lockedAt:serverTimestamp(),
+      revealed:false,
+      points:0
+    };
+    await setDoc(doc(db,"squads",`${m.id}_${A.fbUser.uid}_xi`),squadData);
+    A.savedXI={players:A.sel,C:A.C,VC:A.VC,IP1:A.IP1,IP2:A.IP2};
+    const b=document.getElementById("sav-xi");
+    if(b){b.textContent="Saved!";b.style.color="#86efac";b.style.border="1px solid #22c55e";}
+    toast("Squad saved to dotball!");
+  }catch(e){
+    if(e.code==="permission-denied"||e.message?.includes("permission")||e.message?.includes("Missing")){
+      toast("Firebase blocked the save. Update your Firestore rules (see below)",false);
+      console.error("FIRESTORE RULES FIX: Go to Firebase Console → Firestore → Rules and replace with:\n\nrules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if request.auth != null;\n    }\n  }\n}\n\nThen click Publish.");
+    }else{
+      toast("Save failed: "+e.message,false);
+    }
+  }
+}
+
+async function savR3(){
+  const m=A.match;if(!m||!A.fbUser)return;
+  if(isMatchLocked(m)){toast("Match has started — picks are locked!",false);return;}
+  try{
+    await setDoc(doc(db,"squads",`${m.id}_${A.fbUser.uid}_r3`),{uid:A.fbUser.uid,matchId:m.id,type:"r3",name:A.profile?.name||"Player",players:A.squad3.map(p=>p.id),lockedAt:serverTimestamp(),revealed:false,runs:0});
+    A.savedR3=[...A.squad3];
+    const b=document.getElementById("sav-r3");
+    if(b){b.textContent="Saved!";b.style.color="#86efac";b.style.border="1px solid #22c55e";}
+    toast("Top 3 saved to dotball!");
+  }catch(e){
+    if(e.code==="permission-denied"||e.message?.includes("permission")||e.message?.includes("Missing")){
+      toast("Firebase blocked save. Check console for Firestore rules fix",false);
+      console.error("FIRESTORE RULES: Go to Firebase Console → Firestore → Rules. Set: allow read, write: if request.auth != null;");
+    }else{toast("Save failed: "+e.message,false);}
+  }
+}
+
+async function mkCh(){
+  const inp=document.getElementById("chn");
+  const n=(inp?inp.value:A.chName||"").trim();
+  A.chName=n;
+  if(!n){toast("Enter a challenge name",false);return;}
+  if(!A.fbUser){toast("Please sign in first",false);return;}
+  const ci=genCode();
+  try{
+    await setDoc(doc(db,"challenges",ci.w),{name:n,code:ci.w,fmt:A.chFmt||"xi",owner:A.fbUser.uid,ownerName:A.profile?.name||"Player",members:[A.fbUser.uid],memberNames:[A.profile?.name||"Player"],createdAt:serverTimestamp()});
+    A.challenges.push({id:ci.w,name:n,code:ci.w,fmt:A.chFmt||"xi",members:[A.fbUser.uid],own:true});
+    A.chName="";A.chMode=null;toast("Challenge created! Code: "+ci.w);R();
+  }catch(e){toast("Failed: "+e.message,false);}
+}
+
+async function jnCh(){
+  const inp=document.getElementById("chc");
+  const code=(inp?inp.value:A.chCode||"").trim().toUpperCase();
+  A.chCode=code;
+  if(code.length<4){toast("Enter a valid challenge code (at least 4 letters)",false);return;}
+  if(!A.fbUser){toast("Please sign in first",false);return;}
+  try{
+    const ref=doc(db,"challenges",code);
+    const snap=await getDoc(ref);
+    if(!snap.exists()){toast("Challenge not found — check the code and try again",false);return;}
+    const data=snap.data();
+    if(A.challenges.some(c=>c.id===code)){toast("You're already in this challenge!",false);return;}
+    if(!data.members.includes(A.fbUser.uid)){
+      await updateDoc(ref,{members:arrayUnion(A.fbUser.uid),memberNames:arrayUnion(A.profile?.name||"Player")});
+    }
+    A.challenges.push({id:code,...data,own:false});
+    A.chCode="";A.chMode=null;
+    toast("Joined "+data.name+"! Pick your squad now");
+    /* Redirect to next upcoming match to pick squad */
+    const nextMatch=SCH.find(mx=>mx.status==="next")||SCH.find(mx=>mx.status==="future");
+    if(nextMatch){
+      if(data.fmt==="r3"){openR3(nextMatch.id);}
+      else{openXI(nextMatch.id);}
+    }else{R();}
+  }catch(e){toast("Failed to join: "+e.message,false);}
+}
+
+/* ══════════════════════════════════════════
+   AUTO PICK — default XI based on form + credit value
+   Rules: 11 players, <=100 credits, max 6 per team,
+   min 1 WK, 1-4 BAT, 1-4 BOWL, 1-4 AR
+   Prioritize: form:"hot" > captains > high credit (star) > others
+══════════════════════════════════════════ */
+function autoPick(){
+  try{
+  const m=A.match;if(!m){toast("No match selected",false);return;}
+  const all=[...(SQ[m.t1]||[]).map(p=>({...p,team:m.t1})),...(SQ[m.t2]||[]).map(p=>({...p,team:m.t2}))];
+  if(all.length<11){toast("Not enough players available",false);return;}  /* Score each player: hot form +5, captain +3, higher credit = higher score */
+  const scored=all.map(p=>({...p,score:(p.form==="hot"?5:p.form==="warn"?-2:0)+(p.cap?3:0)+(CR[p.id]||7)*0.5}));
+  scored.sort((a,b)=>b.score-a.score);
+  /* Target composition: 2 WK, 3 BAT, 3 BOWL, 3 AR */
+  const target={WK:2,BAT:3,BOWL:3,AR:3};
+  const mins={WK:1,BAT:2,BOWL:2,AR:1};
+  const maxs={WK:4,BAT:6,BOWL:6,AR:4};
+  const picked=[];
+  const rc={WK:0,BAT:0,AR:0,BOWL:0};
+  const tc={};tc[m.t1]=0;tc[m.t2]=0;
+  function canAdd(p){
+    if(picked.some(s=>s.id===p.id))return false;
+    if(tc[p.team]>=6)return false;
+    if(rc[p.r]>=maxs[p.r])return false;
+    const newCost=creditSum([...picked,p]);
+    if(newCost>100)return false;
+    /* Check remaining slots can fill minimum requirements */
+    const remaining=10-picked.length;
+    const needed=Object.entries(mins).reduce((s,[r,mn])=>s+Math.max(0,mn-(rc[r]+(p.r===r?1:0))),0);
+    if(needed>remaining)return false;
+    return true;
+  }
+  /* Phase 1: Fill minimum requirements with best available */
+  for(const role of ["WK","BAT","BOWL","AR"]){
+    const pool=scored.filter(p=>p.r===role);
+    for(const p of pool){
+      if(rc[role]>=mins[role])break;
+      if(canAdd(p)){picked.push(p);rc[p.r]++;tc[p.team]++;}
+    }
+  }
+  /* Phase 2: Fill to target composition */
+  for(const role of ["BAT","AR","BOWL","WK"]){
+    const pool=scored.filter(p=>p.r===role);
+    for(const p of pool){
+      if(picked.length>=11)break;
+      if(rc[role]>=target[role])break;
+      if(canAdd(p)){picked.push(p);rc[p.r]++;tc[p.team]++;}
+    }
+  }
+  /* Phase 3: Fill remaining slots with highest scored available */
+  for(const p of scored){
+    if(picked.length>=11)break;
+    if(canAdd(p)){picked.push(p);rc[p.r]++;tc[p.team]++;}
+  }
+  if(picked.length===11){
+    A.sel=picked;
+    A.C=A.VC=A.IP1=A.IP2=null;
+    toast("Auto-picked XI! Review and tweak if needed.");
+    R();
+  }else{
+    toast("Could not auto-pick a valid XI (got "+picked.length+") — try manually",false);
+  }
+  }catch(e){toast("Auto pick error: "+e.message,false);console.error("autoPick error:",e);}
+}
+
+/* ══════════════════════════════════════════
+   LOCAL ACTIONS
+══════════════════════════════════════════ */
+function _navCore(s){A.screen=s;A.match=null;A.mode=null;if(s==="groups"){A.grpBadge=0;loadChallenges();}R()}
+function back(){A.screen="home";A.match=null;A.mode=null;R()}
+function obN(){A.ob<2?A.ob++:obS();R()}
+function obS(){A.screen="auth";R()}
+function togP(id){
+  const all=[...(SQ[A.match.t1]||[]).map(p=>({...p,team:A.match.t1})),...(SQ[A.match.t2]||[]).map(p=>({...p,team:A.match.t2}))];
+  const p=all.find(x=>x.id===id);if(!p)return;
+  const idx=A.sel.findIndex(s=>s.id===id);
+  if(idx>=0){A.sel.splice(idx,1);if(A.C?.id===id)A.C=null;if(A.VC?.id===id)A.VC=null;if(A.IP1?.id===id)A.IP1=null;if(A.IP2?.id===id)A.IP2=null;}
+  else{
+    const cr=CR[id]||7,sp=creditSum(A.sel);
+    /* BUG 3: Use safe float comparison */
+    if(A.sel.length>=11||Math.round((cr+sp)*10)/10>100||A.sel.filter(s=>s.team===p.team).length>=6)return;
+    /* BUG 2: Role validation — enforce: min 1 WK, max 8 BAT, max 6 BOWL, max 5 AR */
+    const rc={WK:0,BAT:0,AR:0,BOWL:0};A.sel.forEach(s=>rc[s.r]++);
+    const remaining=10-A.sel.length; /* slots left after this pick */
+    if(p.r==="WK"&&rc.WK>=4){toast("Max 4 wicketkeepers",false);return;}
+    if(p.r==="BAT"&&rc.BAT>=6){toast("Max 6 batters",false);return;}
+    if(p.r==="BOWL"&&rc.BOWL>=6){toast("Max 6 bowlers",false);return;}
+    if(p.r==="AR"&&rc.AR>=4){toast("Max 4 all-rounders",false);return;}
+    /* Ensure at least 1 WK can still be picked */
+    if(p.r!=="WK"&&rc.WK===0&&remaining<=1){toast("Must include at least 1 WK",false);return;}
+    A.sel.push(p);
+    const pb=document.getElementById("pb"+id);
+    if(pb){pb.style.transform="scale(1.4)";setTimeout(()=>{pb.style.transform="scale(1)"},180);}
+  }
+  R();
+}
+function remP(id){A.sel=A.sel.filter(s=>s.id!==id);if(A.C?.id===id)A.C=null;if(A.VC?.id===id)A.VC=null;if(A.IP1?.id===id)A.IP1=null;if(A.IP2?.id===id)A.IP2=null;R()}
+function gRoles(){
+  if(A.sel.length!==11)return;
+  /* BUG 2: Validate role composition before proceeding */
+  const rc={WK:0,BAT:0,AR:0,BOWL:0};A.sel.forEach(p=>rc[p.r]++);
+  if(rc.WK<1){toast("Need at least 1 wicketkeeper",false);return;}
+  if(rc.BAT<1){toast("Need at least 1 batter",false);return;}
+  if(rc.BOWL<1){toast("Need at least 1 bowler",false);return;}
+  if(rc.AR<1){toast("Need at least 1 all-rounder",false);return;}
+  A.step="roles";R();
+}
+function setC(id){const p=A.sel.find(s=>s.id===id);A.C=A.C?.id===id?null:p;if(A.VC?.id===id)A.VC=null;R()}
+function setVC(id){const p=A.sel.find(s=>s.id===id);A.VC=A.VC?.id===id?null:p;if(A.C?.id===id)A.C=null;R()}
+function setIP(id){
+  const p=A.sel.find(s=>s.id===id);if(!p)return;
+  /* If already assigned, toggle off */
+  if(A.IP1?.id===id){A.IP1=null;R();return;}
+  if(A.IP2?.id===id){A.IP2=null;R();return;}
+  /* Assign to the correct team slot */
+  const m=A.match;
+  if(p.team===m.t1){
+    A.IP1=p;
+  } else {
+    A.IP2=p;
+  }
+  /* Can't be C/VC and IP at the same time */
+  if(A.C?.id===id)A.C=null;
+  if(A.VC?.id===id)A.VC=null;
+  R();
+}
+function lockXI(){if(A.C&&A.VC&&A.IP1&&A.IP2){A.step="done";try{navigator.vibrate&&navigator.vibrate([10,50,10])}catch(e){}R()}}
+function ldXI(){if(!A.savedXI)return;const all=[...(SQ[A.match.t1]||[]).map(p=>({...p,team:A.match.t1})),...(SQ[A.match.t2]||[]).map(p=>({...p,team:A.match.t2}))];
+  const validPlayers=A.savedXI.players.map(sp=>all.find(p=>p.id===sp.id)).filter(Boolean);
+  const dropped=A.savedXI.players.length-validPlayers.length;
+  A.sel=validPlayers;
+  A.C=A.savedXI.C?all.find(p=>p.id===A.savedXI.C.id)||null:null;
+  A.VC=A.savedXI.VC?all.find(p=>p.id===A.savedXI.VC.id)||null:null;
+  A.IP1=A.savedXI.IP1?all.find(p=>p.id===A.savedXI.IP1.id)||null:null;
+  A.IP2=A.savedXI.IP2?all.find(p=>p.id===A.savedXI.IP2.id)||null:null;
+  if(A.C&&!A.sel.find(s=>s.id===A.C.id))A.C=null;
+  if(A.VC&&!A.sel.find(s=>s.id===A.VC.id))A.VC=null;
+  if(A.IP1&&!A.sel.find(s=>s.id===A.IP1.id))A.IP1=null;
+  if(A.IP2&&!A.sel.find(s=>s.id===A.IP2.id))A.IP2=null;
+  A.copXI=true;
+  if(dropped>0)toast(dropped+" player"+(dropped>1?"s":"")+" not in this match — pick replacement"+(dropped>1?"s":""),false);
+  R()}
+function togR3(id){const all=[...(SQ[A.match.t1]||[]).map(p=>({...p,team:A.match.t1})),...(SQ[A.match.t2]||[]).map(p=>({...p,team:A.match.t2}))];const p=all.find(x=>x.id===id);if(!p)return;const idx=A.squad3.findIndex(s=>s&&s.id===id);if(idx>=0){A.squad3.splice(idx,1);}else{if(A.squad3.length>=3||A.squad3.filter(s=>s&&s.team===p.team).length>=2)return;A.squad3.push(p);}R()}
+function remR3(i){A.squad3.splice(i,1);R()}
+function lockR3(){if(A.squad3.length===3){A.done3=true;R()}}
+function openShare(){A.shCode=A.codeItem;A.showSh=true;A.shDef=false;A.copied=false;R()}
+function openShare3(){A.shCode=A.code3;A.showSh=true;A.shDef=false;A.copied=false;R()}
+function doSh(){const txt=`Join my dotball IPL 2026 challenge!\nCode: ${A.shCode?.w||""}\nType this word on dotball to join my group.`;if(navigator.share){navigator.share({title:"dotball",text:txt}).catch(()=>{});}else{try{navigator.clipboard.writeText(txt);toast("Copied to clipboard!");}catch(e){prompt("Copy this:",txt);}}A.copied=true;R();setTimeout(()=>{A.copied=false;R()},2200)}
+function cpCode(){try{navigator.clipboard.writeText(A.shCode?.w||"")}catch(e){}A.copied=true;R();setTimeout(()=>{A.copied=false;R()},2200)}
+function uploadAv(inp){if(!inp.files||!inp.files[0])return;const fr=new FileReader();fr.onload=e=>{A.avatar=e.target.result;R();};fr.readAsDataURL(inp.files[0]);}
+function editName(){const n=prompt("New display name:",A.profile?.name||"");if(n&&n.trim().length>=2){A.profile.name=n.trim();localStorage.setItem("db_name",n.trim());if(A.fbUser){updateProfile(A.fbUser,{displayName:n.trim()}).catch(()=>{});setDoc(doc(db,"users",A.fbUser.uid),{name:n.trim()},{merge:true}).catch(()=>{});}toast("Name updated!");R();}}
+async function notifPerm(){const ok=await Notification.requestPermission();toast(ok==="granted"?"Notifications enabled!":"Permission denied",ok==="granted");}
+
+/* ══════════════════════════════════════════
+   BOOT
+══════════════════════════════════════════ */
+// Register service worker
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("/sw.js").catch(()=>{});
+}
+
+/* E2E 6: SPA browser back button support */
+window.addEventListener("popstate",()=>{
+  if(A.screen==="play"){A.screen="home";A.match=null;A.mode=null;R();}
+  else if(A.showSh){A.showSh=false;R();}
+  else if(A.showPre){A.showPre=null;R();}
+  else if(A.liveSc){A.liveSc=false;R();}
+  else if(A.liveCt){A.liveCt=false;R();}
+  else if(A.screen!=="home"&&A.fbUser){_navCore("home");}
+});
+/* Push state when navigating into sub-screens */
+function nav(s){history.pushState({s},"");_navCore(s);}
+function openXI(mid){history.pushState({s:"play"},"");const m=SCH.find(x=>x.id===mid)||SCH[0];A.match=m;A.mode="xi";A.step="pick";A.sel=[];A.C=A.VC=A.IP1=A.IP2=null;A.xiF="ALL";A.xiR="ALL";A.xiQ="";A.copXI=false;A.codeItem=genCode();A.screen="play";R()}
+function openR3(mid){history.pushState({s:"play"},"");const m=SCH.find(x=>x.id===mid)||SCH[0];A.match=m;A.mode="r3";A.squad3=[];A.done3=false;A.r3F="ALL";A.r3Q="";A.code3=genCode();A.screen="play";R()}
+
+/* ── Boot: Firebase auth drives everything ── */
+function bootApp(){
+  const ld=document.getElementById("loading");
+  if(ld) ld.style.display="none";
+  R();
+}
+
+// Firebase auth is the source of truth
+let booted=false;
+setTimeout(()=>{if(!booted){booted=true;bootApp();}}, 4000);
+
+onAuthStateChanged(auth, user => {
+  if(!booted){booted=true;}
+  const ld=document.getElementById("loading");
+  if(ld) ld.style.display="none";
+
+  /* Don't interfere while signup/login is in progress */
+  if(A.authBusy) return;
+
+  if(user&&user.displayName){
+    A.fbUser=user;
+    A.profile={name:user.displayName,uid:user.uid};
+    localStorage.setItem("db_name",user.displayName);
+    localStorage.setItem("db_uid",user.uid);
+    if(A.screen==="ob"||A.screen==="auth")A.screen="home";
+    loadChallenges();
+  } else if(user&&!user.displayName){
+    /* Authenticated but no display name — likely mid-signup, ignore */
+  } else {
+    /* Not signed in */
+    A.fbUser=null;A.profile=null;
+  }
+  R();
+}, ()=>{ if(!booted){booted=true;bootApp();} });
+
+// Make functions global
+Object.assign(window,{A,R,obN,obS,doEmailSignup,doEmailLogin,doResetPw,doSignIn,doSignOut,playBtn,nav,back,openXI,openR3,togP,remP,gRoles,setC,setVC,setIP,lockXI,ldXI,togR3,remR3,lockR3,savXI,savR3,openShare,openShare3,doSh,cpCode,uploadAv,editName,notifPerm,mkCh,jnCh,autoPick});
+</script>
+</body>
+</html>

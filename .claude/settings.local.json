@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(node_modules/.bin/next build:*)",
+      "Bash(npm install:*)",
+      "WebFetch(domain:www.iplt20.com)",
+      "WebSearch",
+      "WebFetch(domain:www.olympics.com)",
+      "WebFetch(domain:en.wikipedia.org)",
+      "WebFetch(domain:www.mykhel.com)",
+      "WebFetch(domain:ipl2026.net)",
+      "WebFetch(domain:www.espncricinfo.com)",
+      "WebFetch(domain:thefederal.com)",
+      "WebFetch(domain:www.oneindia.com)",
+      "WebFetch(domain:crickedge.com)",
+      "WebFetch(domain:ipl2026.com.in)",
+      "WebFetch(domain:www.cricbuzz.com)",
+      "Bash(node -e \"const d = require\\('./data/squads.json'\\); console.log\\(JSON.stringify\\(d.squads['MI'].slice\\(0,3\\), null, 2\\)\\);\")"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\imvis\\dotball\\app\\play\\[matchId]\\xi",
+      "c:\\Users\\imvis\\dotball\\app\\play\\[matchId]"
+    ]
+  }
+}

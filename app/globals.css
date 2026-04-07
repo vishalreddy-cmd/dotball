@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #08090f;
+  color: #eef0ff;
+  overscroll-behavior: none;
+}
+
+#__next, main {
+  height: 100%;
+}
+
+/* hide scrollbars */
+::-webkit-scrollbar { width: 0; height: 0; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.blink { animation: pulse-dot 1.4s ease-in-out infinite; }
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.sheet-enter { animation: slide-up 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+
+/* prevent iOS bounce on fixed layout */
+.scroll-area {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
