@@ -4,6 +4,77 @@ import MatchCard from '@/components/MatchCard';
 import PreMatchSheet from '@/components/PreMatchSheet';
 import { buildSchedule } from '@/lib/schedule';
 
+function ScoringGuide() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginTop: 18, marginBottom: 20 }}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid #1c2035', background: '#111421', cursor: 'pointer' }}
+      >
+        <span style={{ fontSize: 11, fontWeight: 600, color: '#7a85a0' }}>How scoring works</span>
+        <span style={{ color: '#424960' }}>{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <div style={{ background: '#0d0f1a', borderRadius: '0 0 10px 10px', border: '1px solid #1c2035', borderTop: 'none', padding: '10px 12px' }}>
+          {SCORING_ROWS.map((row, i) =>
+            row.section ? (
+              <div key={i} style={{ fontSize: 9, fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: 1, marginTop: i === 0 ? 0 : 10, marginBottom: 4 }}>
+                {row.section}
+              </div>
+            ) : (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 4, borderBottom: '1px solid #1c203522', marginBottom: 4 }}>
+                <span style={{ fontSize: 10, color: '#7a85a0' }}>{row.label}</span>
+                <span style={{ fontSize: 10, fontWeight: 700, color: row.pts.startsWith('-') ? '#f87171' : row.pts.startsWith('+') ? '#22c55e' : '#f5a623' }}>{row.pts}</span>
+              </div>
+            )
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const SCORING_ROWS = [
+  { section: 'Batting' },
+  { label: 'Per run', pts: '+1' },
+  { label: '25 runs', pts: '+4' },
+  { label: '50 runs', pts: '+8' },
+  { label: '75 runs', pts: '+12' },
+  { label: '100 runs', pts: '+16' },
+  { label: 'Duck (BAT/WK)', pts: '-2' },
+  { label: 'Per boundary (4)', pts: '+1' },
+  { label: 'Per six', pts: '+2' },
+  { label: 'SR ≥ 170 (min 10 runs)', pts: '+6' },
+  { label: 'SR ≥ 150', pts: '+4' },
+  { label: 'SR ≥ 130', pts: '+2' },
+  { label: 'SR < 70 (min 10 balls)', pts: '-6' },
+  { label: 'SR < 80', pts: '-4' },
+  { label: 'SR < 100', pts: '-2' },
+  { section: 'Bowling' },
+  { label: 'Per wicket', pts: '+25' },
+  { label: '3 wickets', pts: '+8' },
+  { label: '4 wickets', pts: '+12' },
+  { label: '5 wickets', pts: '+16' },
+  { label: 'Economy < 5 (min 2 ov)', pts: '+6' },
+  { label: 'Economy < 6', pts: '+4' },
+  { label: 'Economy < 7', pts: '+2' },
+  { label: 'Economy > 10', pts: '-2' },
+  { label: 'Economy > 11', pts: '-4' },
+  { label: 'Economy > 12', pts: '-6' },
+  { section: 'Fielding' },
+  { label: 'Catch', pts: '+8' },
+  { label: 'Stumping', pts: '+12' },
+  { label: 'Run out', pts: '+6' },
+  { section: 'Multipliers' },
+  { label: 'Captain', pts: '×2' },
+  { label: 'Vice-Captain', pts: '×1.5' },
+  { label: 'Impact Player', pts: '×1.25' },
+  { section: 'IPL Rules' },
+  { label: 'Max overseas in XI', pts: '4' },
+  { label: 'Impact sub (if 4 overseas)', pts: 'Indian only' },
+];
+
 export default function HomePage() {
   const [schedule,    setSchedule]    = useState(() => buildSchedule());
   const [pastOpen,    setPastOpen]    = useState(false);
@@ -108,6 +179,9 @@ export default function HomePage() {
           {upcomingOpen && collapsible.map(m => <MatchCard key={m.id} match={m} onInfo={setPreMatch} />)}
         </>
       )}
+
+      {/* Scoring rules — collapsible */}
+      <ScoringGuide />
 
       {/* Pre-match analysis sheet */}
       {preMatch && <PreMatchSheet match={preMatch} onClose={() => setPreMatch(null)} />}
