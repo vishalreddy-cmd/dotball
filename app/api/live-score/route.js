@@ -160,14 +160,27 @@ export async function GET(request) {
       return NextResponse.json({ live: false, message: 'Match not currently live' });
     }
 
-    // Fetch full scorecard
-    const scoreRes = await fetch(
-      `https://api.cricapi.com/v1/match_scorecard?apikey=${API_KEY}&id=${liveMatch.id}`
-    );
-    const scoreData = await scoreRes.json();
+    // Fetch scorecard + match info in parallel
+    const [scoreRes, infoRes] = await Promise.all([
+      fetch(`https://api.cricapi.com/v1/match_scorecard?apikey=${API_KEY}&id=${liveMatch.id}`),
+      fetch(`https://api.cricapi.com/v1/match_info?apikey=${API_KEY}&id=${liveMatch.id}`),
+    ]);
+    const [scoreData, infoData] = await Promise.all([scoreRes.json(), infoRes.json()]);
 
     const isComplete = liveMatch.matchEnded || scoreData.data?.matchEnded;
     const playerStats = parseScorecard(scoreData.data || {});
+
+    // Detect real impact subs from match_info (substitute === true)
+    const realImpactSubs = [];
+    const teamPlayers = infoData.data?.players || {};
+    Object.values(teamPlayers).forEach(teamArr => {
+      (teamArr || []).forEach(player => {
+        if (player.substitute === true) {
+          const p = findPlayer(player.name);
+          if (p) realImpactSubs.push(p.id);
+        }
+      });
+    });
 
     // Build payload
     const payload = {
@@ -178,6 +191,7 @@ export async function GET(request) {
       status: liveMatch.status || scoreData.data?.status || '',
       score: liveMatch.score || [],
       playerStats,
+      realImpactSubs, // which players were actually used as impact subs
       fetchedAt: now,
     };
 

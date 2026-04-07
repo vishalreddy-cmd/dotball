@@ -40,19 +40,24 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
     return () => clearInterval(id);
   }, [matchId]);
 
-  const playerStats = cache?.playerStats || {};
-  const score       = cache?.score       || [];
-  const status      = cache?.status      || '';
-  const live        = cache?.live        || false;
-  const complete    = cache?.complete    || false;
+  const playerStats    = cache?.playerStats    || {};
+  const score          = cache?.score          || [];
+  const status         = cache?.status         || '';
+  const live           = cache?.live           || false;
+  const complete       = cache?.complete       || false;
+  const realImpactSubs = cache?.realImpactSubs || [];
+
+  // ×1.25 only if you predicted the correct real impact sub
+  const ipMultiplier = (id) =>
+    (id === ip1Id || id === ip2Id) && realImpactSubs.includes(id) ? 1.25 : 1;
 
   const totalPts = players.reduce((sum, p) => {
     const s = playerStats[p.id];
     if (!s?.pts) return sum;
     let pts = s.pts;
-    if (captainId === p.id)             pts *= 2;
-    else if (vcId === p.id)             pts *= 1.5;
-    else if (ip1Id === p.id || ip2Id === p.id) pts *= 1.25;
+    if (captainId === p.id) pts *= 2;
+    else if (vcId === p.id) pts *= 1.5;
+    else pts *= ipMultiplier(p.id);
     return sum + pts;
   }, 0);
 
@@ -140,9 +145,9 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
         const rc    = ROLE_COLORS[p.r] || '#818cf8';
 
         let pts = s?.pts || 0;
-        if (isC)              pts = Math.round(pts * 2);
-        else if (isVC)        pts = Math.round(pts * 1.5);
-        else if (isIP1 || isIP2) pts = Math.round(pts * 1.25);
+        if (isC)        pts = Math.round(pts * 2);
+        else if (isVC)  pts = Math.round(pts * 1.5);
+        else            pts = Math.round(pts * ipMultiplier(p.id));
 
         return (
           <div key={p.id} style={{
@@ -158,8 +163,15 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
                 <span style={{ fontSize: 11, fontWeight: 600, color: '#eef0ff' }}>{p.n}</span>
                 {isC   && <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: '#f59e0b', color: '#000', fontWeight: 800 }}>C×2</span>}
                 {isVC  && <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: '#818cf8', color: '#fff', fontWeight: 800 }}>VC×1.5</span>}
-                {isIP1 && <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: '#34d399', color: '#000', fontWeight: 800 }}>IP×1.25</span>}
-                {isIP2 && <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: '#34d399', color: '#000', fontWeight: 800 }}>IP×1.25</span>}
+                {(isIP1 || isIP2) && realImpactSubs.includes(p.id) && (
+                  <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: '#34d399', color: '#000', fontWeight: 800 }}>IP ×1.25</span>
+                )}
+                {(isIP1 || isIP2) && !realImpactSubs.includes(p.id) && realImpactSubs.length > 0 && (
+                  <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: '#374151', color: '#9ca3af', fontWeight: 800 }}>IP missed</span>
+                )}
+                {(isIP1 || isIP2) && realImpactSubs.length === 0 && (
+                  <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: '#34d39922', color: '#34d399', fontWeight: 800 }}>IP pick</span>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 8, padding: '1px 4px', borderRadius: 4, background: `${rc}18`, color: rc }}>{p.r}</span>
