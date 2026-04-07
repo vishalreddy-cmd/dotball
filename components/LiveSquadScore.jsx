@@ -31,6 +31,15 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
     return () => unsub();
   }, [matchId]);
 
+  // Poll the API to keep Firestore cache fresh — all clients benefit via onSnapshot above
+  useEffect(() => {
+    if (!matchId) return;
+    const poll = () => fetch(`/api/live-score?matchId=${matchId}`).catch(() => {});
+    poll(); // fetch immediately on mount
+    const id = setInterval(poll, 15_000); // then every 15s
+    return () => clearInterval(id);
+  }, [matchId]);
+
   const playerStats = cache?.playerStats || {};
   const score       = cache?.score       || [];
   const status      = cache?.status      || '';
