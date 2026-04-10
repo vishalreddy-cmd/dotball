@@ -31,6 +31,7 @@ export default function XIPage() {
 
   const squad = useSquad();
   const { sel, C, VC, IP1, IP2, step, credits, remaining, roleCounts,
+    overseasInXI, ipMustBeIndian,
     toggle, remove, setPicked, setCaptain, setViceCaptain, toggleImpact,
     goToRoles, reset, lockSquad, editSquad, loadSquad } = squad;
 
@@ -144,6 +145,8 @@ export default function XIPage() {
     if (rc[player.r] >= maxs[player.r]) { toast(`Max ${maxs[player.r]} ${player.r} players`, false); return; }
     const remaining2 = 10 - sel.length;
     if (player.r !== 'WK' && rc.WK === 0 && remaining2 <= 1) { toast('Must include at least 1 WK', false); return; }
+    // Overseas limit: max 4 in playing XI
+    if (player.c && player.c !== 'IN' && overseasInXI >= 4) { toast('Max 4 overseas players in XI (IPL rule)', false); return; }
     toggle(player, match.t1, match.t2);
   }
 
@@ -271,15 +274,17 @@ export default function XIPage() {
 
         <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingBottom: 4 }}>
           <button onClick={editSquad} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', cursor: 'pointer', fontSize: 12 }}>Edit squad</button>
-          <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid #1c2035', background: 'transparent', color: saving ? '#22c55e' : '#7a85a0', cursor: 'pointer', fontSize: 12 }}>
-            {saving ? 'Saving...' : 'Save squad'}
+          <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '8px 11px', borderRadius: 11, border: '1px solid #1c2035', background: 'transparent', color: saving ? '#22c55e' : '#7a85a0', cursor: 'pointer', fontSize: 12 }}>
+            <div>{saving ? 'Saving...' : 'Save squad'}</div>
+            {!saving && <div style={{ fontSize: 8, color: '#424960', marginTop: 2 }}>replicates for all challenges</div>}
           </button>
         </div>
         <button
           onClick={() => setShowShare(true)}
           style={{ width: '100%', marginTop: 6, marginBottom: 12, padding: 12, borderRadius: 11, border: 'none', background: 'linear-gradient(90deg,#25D366,#128C7E)', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
         >
-          🟢 Share squad
+          <div>🟢 Share squad</div>
+          <div style={{ fontSize: 9, fontWeight: 400, opacity: 0.85, marginTop: 2 }}>not recommended · reveals your picks</div>
         </button>
         {showShare && (
           <ShareSquadCard
@@ -303,6 +308,7 @@ export default function XIPage() {
         onVC={id => { setViceCaptain(id, sel); if (C?.id === id) setCaptain(id, sel); }}
         onIP={handleSetIP}
         onLock={lockSquad}
+        ipMustBeIndian={ipMustBeIndian}
       />
     );
   }
@@ -335,6 +341,13 @@ export default function XIPage() {
       )}
 
       <CreditBar spent={credits} selCount={sel.length} roleCounts={roleCounts} />
+
+      {/* Overseas counter */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
+        <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 99, background: overseasInXI >= 4 ? '#7c3aed22' : '#1c2035', color: overseasInXI >= 4 ? '#a78bfa' : '#424960', border: `1px solid ${overseasInXI >= 4 ? '#7c3aed44' : '#1c2035'}` }}>
+          {overseasInXI}/4 overseas
+        </span>
+      </div>
 
       {/* Auto pick — always visible so user can re-roll at any time */}
       <button onClick={handleAutoPick} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid #f59e0b44', background: '#f59e0b08', color: '#f5a623', fontWeight: 700, fontSize: 12, cursor: 'pointer', marginBottom: 8 }}>
