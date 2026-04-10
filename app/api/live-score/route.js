@@ -32,6 +32,9 @@ function parseScorecard(data) {
 
   const innings = data?.scorecard || data?.score || [];
   innings.forEach(inn => {
+    // Skip super over — does not count towards fantasy points
+    const innName = (inn.inningsType || inn.inning || '').toLowerCase();
+    if (inn.isSuperOver || innName.includes('super over')) return;
     // Batting
     (inn.batting || []).forEach(b => {
       const p = findPlayer(b.batsman?.name || b.name);
@@ -168,6 +171,13 @@ export async function GET(request) {
     const [scoreData, infoData] = await Promise.all([scoreRes.json(), infoRes.json()]);
 
     const isComplete = liveMatch.matchEnded || scoreData.data?.matchEnded;
+    const matchStatus = scoreData.data?.status || liveMatch.status || '';
+    const isNoResult  = isComplete && (
+      !scoreData.data?.matchWinner ||
+      matchStatus.toLowerCase().includes('no result') ||
+      matchStatus.toLowerCase().includes('abandoned') ||
+      matchStatus.toLowerCase().includes('cancelled')
+    );
     const playerStats = parseScorecard(scoreData.data || {});
 
     // Detect real impact subs from match_info (substitute === true)
@@ -186,6 +196,7 @@ export async function GET(request) {
     const payload = {
       live: !isComplete,
       complete: isComplete,
+      noResult: isNoResult,
       matchId,
       cricapiId: liveMatch.id,
       status: liveMatch.status || scoreData.data?.status || '',
@@ -198,12 +209,13 @@ export async function GET(request) {
     // If match complete, write result to Firestore matches collection
     if (isComplete && scoreData.data) {
       const d = scoreData.data;
-      const winner = d.matchWinner || '';
+      const winner = isNoResult ? '' : (d.matchWinner || '');
       const result = {
         t1s: d.score?.[0] ? `${d.score[0].r}/${d.score[0].w}` : '',
         t2s: d.score?.[1] ? `${d.score[1].r}/${d.score[1].w}` : '',
         winner,
-        margin: d.status || '',
+        margin: isNoResult ? 'No Result' : (d.status || ''),
+        noResult: isNoResult,
       };
       await db.collection('matchResults').doc(matchId).set({
         ...result,

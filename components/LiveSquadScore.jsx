@@ -45,6 +45,7 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
   const status         = cache?.status         || '';
   const live           = cache?.live           || false;
   const complete       = cache?.complete       || false;
+  const noResult       = cache?.noResult       || false;
   const realImpactSubs = cache?.realImpactSubs || [];
 
   // ×1.25 only if you predicted the correct real impact sub
@@ -96,9 +97,10 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
         <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 12 }}>
           <div style={{ background: live ? 'linear-gradient(90deg,#6366f1,#8b5cf6)' : '#1c2035', padding: '6px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>
-              {live ? '🔴 Live' : '✅ Final'}
+              {live ? '🔴 Live' : noResult ? '🌧 No Result' : '✅ Final'}
             </span>
             {live && <span style={{ fontSize: 9, color: '#c7d2fe' }}>auto-updating</span>}
+            {noResult && <span style={{ fontSize: 9, color: '#c7d2fe' }}>Match abandoned</span>}
           </div>
           {score.length > 0 && (
             <div style={{ background: '#0d0f1a', padding: '10px 14px', display: 'flex', gap: 8 }}>

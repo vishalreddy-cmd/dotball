@@ -17,7 +17,8 @@ function fmt(currency, amount) {
 }
 
 export default function WagerCard({ challenge, matchId, myUid, myName, matchLocked }) {
-  const [wager,      setWager]      = useState(undefined); // undefined = loading
+  const [wager,      setWager]      = useState(undefined);
+  const [matchNoResult, setMatchNoResult] = useState(false);
   const [mode,       setMode]       = useState(null);       // null | 'propose' | 'accept'
   const [currency,   setCurrency]   = useState('INR');
   const [amount,     setAmount]     = useState('');
@@ -34,6 +35,14 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
     });
     return () => unsub();
   }, [wagerId, challenge?.id]);
+
+  useEffect(() => {
+    if (!matchId) return;
+    const unsub = onSnapshot(doc(db, 'liveCache', matchId), snap => {
+      if (snap.exists()) setMatchNoResult(snap.data().payload?.matchNoResult || false);
+    });
+    return () => unsub();
+  }, [matchId]);
 
   if (wager === undefined) return null; // still loading
 
@@ -171,9 +180,9 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
           </span>
         </div>
         <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 99, fontWeight: 700,
-          background: isSettled ? '#14532d' : isOpen ? '#f59e0b18' : '#1c2035',
-          color: isSettled ? '#86efac' : isOpen ? '#f5a623' : '#7a85a0' }}>
-          {isSettled ? 'Settled' : isOpen && matchLocked ? 'Locked' : 'Open'}
+          background: matchNoResult ? '#1c2035' : isSettled ? '#14532d' : isOpen ? '#f59e0b18' : '#1c2035',
+          color: matchNoResult ? '#7a85a0' : isSettled ? '#86efac' : isOpen ? '#f5a623' : '#7a85a0' }}>
+          {matchNoResult ? '🌧 Void' : isSettled ? 'Settled' : isOpen && matchLocked ? 'Locked' : 'Open'}
         </span>
       </div>
 
@@ -269,15 +278,22 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
         </div>
       )}
 
+      {/* No result — wager void */}
+      {matchNoResult && (
+        <div style={{ textAlign: 'center', padding: '8px 0', fontSize: 10, color: '#7a85a0', borderTop: '1px solid #1c2035', marginTop: 6 }}>
+          🌧 Match abandoned — wager is void. No money changes hands.
+        </div>
+      )}
+
       {/* Settled state */}
-      {isSettled && (
+      {isSettled && !matchNoResult && (
         <div style={{ textAlign: 'center', padding: '6px 0', fontSize: 10, color: '#86efac' }}>
           Marked as settled — thanks for playing fair!
         </div>
       )}
 
       {/* Mark settled button — show to any participant after match */}
-      {hasAccepted && matchLocked && !isSettled && (
+      {hasAccepted && matchLocked && !isSettled && !matchNoResult && (
         <button onClick={markSettled} disabled={busy}
           style={{ width: '100%', padding: '7px 0', borderRadius: 8, border: '1px solid #22c55e33', background: 'transparent', color: '#22c55e', fontSize: 10, cursor: 'pointer', marginTop: 6, opacity: busy ? 0.6 : 1 }}>
           Mark as settled (paid outside app)
