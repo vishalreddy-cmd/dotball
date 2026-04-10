@@ -295,7 +295,7 @@
     "s15":  { "mat": 3, "runs": 96,  "sr": 152, "wkts": 0, "eco": 0 },
     "s1":   { "mat": 3, "runs": 95,  "sr": 186, "wkts": 0, "eco": 0 },
     "rr3":  { "mat": 2, "runs": 93,  "sr": 182, "wkts": 0, "eco": 0 },
-    "rr2":  { "mat": 2, "runs": 93,  "sr": 129, "wkts": 0, "eco": 0 },
+    "rr2":  { "mat": 4, "runs": 230, "sr": 158, "wkts": 0, "eco": 0 },
     "m6p":  { "mat": 2, "runs": 90,  "sr": 167, "wkts": 0, "eco": 0 },
     "r9":   { "mat": 2, "runs": 86,  "sr": 246, "wkts": 0, "eco": 0 },
     "g7":   { "mat": 2, "runs": 86,  "sr": 156, "wkts": 0, "eco": 0 },
