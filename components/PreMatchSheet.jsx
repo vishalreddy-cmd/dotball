@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import BottomSheet from './BottomSheet';
 import TeamLogo from './TeamLogo';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, collection, onSnapshot } from 'firebase/firestore';
 import data from '@/data/squads.json';
 
 const T    = data.teams;
@@ -18,21 +18,27 @@ function parseRuns(scoreStr) {
   return isNaN(n) ? null : n;
 }
 
-function venueAvg2026(venue) {
-  const played = data.schedule.filter(m => m.res && m.venue === venue);
-  if (played.length === 0) return null;
+function venueAvg2026(venue, liveResults) {
   const scores = [];
-  played.forEach(m => {
-    const s1 = parseRuns(m.res.t1s);
-    const s2 = parseRuns(m.res.t2s);
+  let matchCount = 0;
+
+  data.schedule.forEach(m => {
+    if (m.venue !== venue) return;
+    // Prefer live Firestore result, fall back to squads.json res
+    const res = liveResults?.[m.id] || m.res;
+    if (!res) return;
+    const s1 = parseRuns(res.t1s);
+    const s2 = parseRuns(res.t2s);
     if (s1 !== null) scores.push(s1);
     if (s2 !== null) scores.push(s2);
+    matchCount++;
   });
+
   if (scores.length === 0) return null;
   const avg  = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
   const high = Math.max(...scores);
   const low  = Math.min(...scores);
-  return { avg, high, low, matches: played.length };
+  return { avg, high, low, matches: matchCount };
 }
 
 function getH2H(t1, t2) {
@@ -82,11 +88,21 @@ function PitchMeter({ pace, spin }) {
 }
 
 export default function PreMatchSheet({ match, onClose }) {
-  const [liveStats, setLiveStats] = useState(null);
+  const [liveStats,   setLiveStats]   = useState(null);
+  const [liveResults, setLiveResults] = useState(null); // Firestore matchResults
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'seasonStats', 'ipl2026'), snap => {
       if (snap.exists()) setLiveStats(snap.data().stats || null);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'matchResults'), snap => {
+      const results = {};
+      snap.docs.forEach(d => { results[d.id] = d.data(); });
+      setLiveResults(results);
     });
     return () => unsub();
   }, []);
@@ -98,7 +114,7 @@ export default function PreMatchSheet({ match, onClose }) {
   const { t1, t2, venue, date, day, time } = match;
   const h2h    = getH2H(t1, t2);
   const venInfo = VEN[venue] || {};
-  const avg2026 = venueAvg2026(venue);
+  const avg2026 = venueAvg2026(venue, liveResults);
   const keyT1  = getKeyPlayers(t1, 3, STATS);
   const keyT2  = getKeyPlayers(t2, 3, STATS);
   const { orangeId, purpleId } = getCapHolders(STATS);
