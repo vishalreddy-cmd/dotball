@@ -7,6 +7,7 @@ import { db } from '@/lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
 import { buildSchedule, isMatchLocked } from '@/lib/schedule';
 import HeadToHead from '@/components/HeadToHead';
+import WagerCard from '@/components/WagerCard';
 import data from '@/data/squads.json';
 
 // Separate code pools per format
@@ -228,6 +229,13 @@ export default function GroupsPage() {
                 </button>
               )}
             </div>
+            <WagerCard
+              challenge={ch}
+              matchId={activeMatch?.id}
+              myUid={user?.uid}
+              myName={profile?.name || 'Player'}
+              matchLocked={activeMatch ? isMatchLocked(activeMatch) : false}
+            />
           </div>
           {ch.own && <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 99, background: '#6366f118', color: '#818cf8', border: '1px solid #6366f133', fontWeight: 700, flexShrink: 0 }}>Owner</span>}
         </div>
