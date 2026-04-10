@@ -272,20 +272,20 @@ export default function XIPage() {
           ))
         )}
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingBottom: 4 }}>
+        <button
+          onClick={() => setShowShare(true)}
+          style={{ width: '100%', marginTop: 12, padding: 12, borderRadius: 11, border: 'none', background: 'linear-gradient(90deg,#25D366,#128C7E)', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+        >
+          <div>🟢 Share squad</div>
+          <div style={{ fontSize: 9, fontWeight: 400, opacity: 0.85, marginTop: 2 }}>not recommended · reveals your picks</div>
+        </button>
+        <div style={{ display: 'flex', gap: 8, marginTop: 8, marginBottom: 12 }}>
           <button onClick={editSquad} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', cursor: 'pointer', fontSize: 12 }}>Edit squad</button>
           <button onClick={handleSave} disabled={saving} style={{ flex: 1, padding: '8px 11px', borderRadius: 11, border: '1px solid #1c2035', background: 'transparent', color: saving ? '#22c55e' : '#7a85a0', cursor: 'pointer', fontSize: 12 }}>
             <div>{saving ? 'Saving...' : 'Save squad'}</div>
             {!saving && <div style={{ fontSize: 8, color: '#424960', marginTop: 2 }}>replicates for all challenges</div>}
           </button>
         </div>
-        <button
-          onClick={() => setShowShare(true)}
-          style={{ width: '100%', marginTop: 6, marginBottom: 12, padding: 12, borderRadius: 11, border: 'none', background: 'linear-gradient(90deg,#25D366,#128C7E)', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
-        >
-          <div>🟢 Share squad</div>
-          <div style={{ fontSize: 9, fontWeight: 400, opacity: 0.85, marginTop: 2 }}>not recommended · reveals your picks</div>
-        </button>
         {showShare && (
           <ShareSquadCard
             match={match}
