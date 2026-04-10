@@ -5,7 +5,7 @@ import './globals.css';
 
 export const metadata = {
   title: 'dotball',
-  description: 'IPL 2026 fantasy with friends — no money, just cricket knowledge',
+  description: 'Pure cricket knowledge. Friendly stakes.',
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'dotball' },
 };
 

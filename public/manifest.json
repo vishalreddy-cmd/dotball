@@ -1,7 +1,7 @@
 {
   "name": "dotball",
   "short_name": "dotball",
-  "description": "IPL 2026 fantasy with friends — no money, just cricket knowledge",
+  "description": "Pure cricket knowledge. Friendly stakes.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#08090f",
