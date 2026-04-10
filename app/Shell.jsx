@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import Onboarding from '@/components/Onboarding';
 import AuthScreen from '@/components/AuthScreen';
 import NavBar from '@/components/NavBar';
+import NotifPrompt from '@/components/NotifPrompt';
 import { usePush } from '@/lib/usePush';
 
 export default function Shell({ children }) {
@@ -94,6 +95,7 @@ export default function Shell({ children }) {
 
       {/* Bottom nav (hidden on play pages) */}
       {!isPlay && <NavBar />}
+      <NotifPrompt uid={user?.uid} />
     </div>
   );
 }
