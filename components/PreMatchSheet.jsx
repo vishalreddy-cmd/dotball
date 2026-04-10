@@ -1,12 +1,15 @@
 'use client';
+import { useState, useEffect } from 'react';
 import BottomSheet from './BottomSheet';
 import TeamLogo from './TeamLogo';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 import data from '@/data/squads.json';
 
 const T    = data.teams;
 const SQ   = data.squads;
 const VEN  = data.venues || {};
-const STATS = data.stats2026 || {};
+const STATIC_STATS = data.stats2026 || {};
 
 /** Parse "203/4" → 203 */
 function parseRuns(scoreStr) {
@@ -42,10 +45,10 @@ function getH2H(t1, t2) {
 }
 
 /** Find orange cap (most runs) and purple cap (most wickets) holder IDs across all players */
-function getCapHolders() {
+function getCapHolders(stats) {
   let orangeId = null, orangeRuns = 0;
   let purpleId = null, purpleWkts = 0;
-  Object.entries(STATS).forEach(([id, s]) => {
+  Object.entries(stats).forEach(([id, s]) => {
     if ((s.runs || 0) > orangeRuns) { orangeRuns = s.runs; orangeId = id; }
     if ((s.wkts || 0) > purpleWkts) { purpleWkts = s.wkts; purpleId = id; }
   });
@@ -53,9 +56,9 @@ function getCapHolders() {
 }
 
 /** Top 3 most impactful players from a team based on 2026 stats */
-function getKeyPlayers(team, limit = 3) {
+function getKeyPlayers(team, limit = 3, stats = {}) {
   const players = (SQ[team] || []).map(p => {
-    const s = STATS[p.id];
+    const s = stats[p.id];
     const impact = s ? (s.runs || 0) + (s.wkts || 0) * 25 : 0;
     return { ...p, impact, runs: s?.runs || 0, wkts: s?.wkts || 0, mat: s?.mat || 0 };
   });
@@ -79,14 +82,26 @@ function PitchMeter({ pace, spin }) {
 }
 
 export default function PreMatchSheet({ match, onClose }) {
+  const [liveStats, setLiveStats] = useState(null);
+
+  useEffect(() => {
+    const unsub = onSnapshot(doc(db, 'seasonStats', 'ipl2026'), snap => {
+      if (snap.exists()) setLiveStats(snap.data().stats || null);
+    });
+    return () => unsub();
+  }, []);
+
+  // Use live Firestore stats if available, fall back to squads.json
+  const STATS = liveStats || STATIC_STATS;
+
   if (!match) return null;
   const { t1, t2, venue, date, day, time } = match;
   const h2h    = getH2H(t1, t2);
   const venInfo = VEN[venue] || {};
   const avg2026 = venueAvg2026(venue);
-  const keyT1  = getKeyPlayers(t1);
-  const keyT2  = getKeyPlayers(t2);
-  const { orangeId, purpleId } = getCapHolders();
+  const keyT1  = getKeyPlayers(t1, 3, STATS);
+  const keyT2  = getKeyPlayers(t2, 3, STATS);
+  const { orangeId, purpleId } = getCapHolders(STATS);
 
   const pitchColor = venInfo.pitch === 'Batting' ? '#f5a623'
     : venInfo.pitch === 'Spin' ? '#06b6d4'

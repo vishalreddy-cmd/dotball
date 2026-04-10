@@ -211,6 +211,24 @@ export async function GET(request) {
         playerStats,
       }, { merge: true });
 
+      // Aggregate season stats — merge this match's player stats into seasonStats/ipl2026
+      const seasonRef = db.collection('seasonStats').doc('ipl2026');
+      const seasonSnap = await seasonRef.get();
+      const existing = seasonSnap.exists ? (seasonSnap.data().stats || {}) : {};
+
+      Object.entries(playerStats).forEach(([pid, s]) => {
+        const prev = existing[pid] || { mat: 0, runs: 0, wkts: 0, sr: 0, eco: 0 };
+        const newMat  = prev.mat + 1;
+        const newRuns = prev.runs + (s.runs || 0);
+        const newWkts = prev.wkts + (s.wickets || 0);
+        // Weighted avg SR and eco
+        const newSr  = newRuns > 0 && s.balls > 0 ? Math.round((newRuns / (prev.mat * (prev.sr || 0) / 100 + (s.balls || 0))) * 100) : prev.sr;
+        const newEco = s.economy > 0 ? parseFloat(((prev.eco * prev.mat + s.economy) / newMat).toFixed(1)) : prev.eco;
+        existing[pid] = { mat: newMat, runs: newRuns, wkts: newWkts, sr: newSr, eco: newEco };
+      });
+
+      await seasonRef.set({ stats: existing, updatedAt: now }, { merge: true });
+
       payload.result = result;
     }
 
