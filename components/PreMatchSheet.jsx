@@ -3,22 +3,18 @@ import BottomSheet from './BottomSheet';
 import TeamLogo from './TeamLogo';
 import data from '@/data/squads.json';
 
-const T   = data.teams;
-const SQ  = data.squads;
-const VEN = data.venues || {};
-const SC  = data.starCredits || {};
+const T    = data.teams;
+const SQ   = data.squads;
+const VEN  = data.venues || {};
+const STATS = data.stats2026 || {};
 
-/** Parse "203/4" → 203, handles all formats */
+/** Parse "203/4" → 203 */
 function parseRuns(scoreStr) {
   if (!scoreStr) return null;
   const n = parseInt(scoreStr.split('/')[0], 10);
   return isNaN(n) ? null : n;
 }
 
-/**
- * Compute 2026 average scores at a venue from actual results.
- * Returns { avg, count } or null if no matches played there yet.
- */
 function venueAvg2026(venue) {
   const played = data.schedule.filter(m => m.res && m.venue === venue);
   if (played.length === 0) return null;
@@ -30,10 +26,10 @@ function venueAvg2026(venue) {
     if (s2 !== null) scores.push(s2);
   });
   if (scores.length === 0) return null;
-  const avg = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
+  const avg  = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length);
   const high = Math.max(...scores);
   const low  = Math.min(...scores);
-  return { avg, high, low, matches: played.length, scores };
+  return { avg, high, low, matches: played.length };
 }
 
 function getH2H(t1, t2) {
@@ -45,13 +41,25 @@ function getH2H(t1, t2) {
   return { total: matches.length, t1Wins, t2Wins, matches };
 }
 
-/** Top 3 players by credit (star players) for a team */
+/** Find orange cap (most runs) and purple cap (most wickets) holder IDs across all players */
+function getCapHolders() {
+  let orangeId = null, orangeRuns = 0;
+  let purpleId = null, purpleWkts = 0;
+  Object.entries(STATS).forEach(([id, s]) => {
+    if ((s.runs || 0) > orangeRuns) { orangeRuns = s.runs; orangeId = id; }
+    if ((s.wkts || 0) > purpleWkts) { purpleWkts = s.wkts; purpleId = id; }
+  });
+  return { orangeId, purpleId };
+}
+
+/** Top 3 most impactful players from a team based on 2026 stats */
 function getKeyPlayers(team, limit = 3) {
-  const players = (SQ[team] || []).map(p => ({
-    ...p,
-    cr: SC[p.id] ?? (7 + 0),
-  }));
-  players.sort((a, b) => b.cr - a.cr);
+  const players = (SQ[team] || []).map(p => {
+    const s = STATS[p.id];
+    const impact = s ? (s.runs || 0) + (s.wkts || 0) * 25 : 0;
+    return { ...p, impact, runs: s?.runs || 0, wkts: s?.wkts || 0, mat: s?.mat || 0 };
+  });
+  players.sort((a, b) => b.impact - a.impact);
   return players.slice(0, limit);
 }
 
@@ -78,6 +86,7 @@ export default function PreMatchSheet({ match, onClose }) {
   const avg2026 = venueAvg2026(venue);
   const keyT1  = getKeyPlayers(t1);
   const keyT2  = getKeyPlayers(t2);
+  const { orangeId, purpleId } = getCapHolders();
 
   const pitchColor = venInfo.pitch === 'Batting' ? '#f5a623'
     : venInfo.pitch === 'Spin' ? '#06b6d4'
@@ -179,10 +188,20 @@ export default function PreMatchSheet({ match, onClose }) {
         )}
       </div>
 
-      {/* Key Players — by credit (star value), not form tags */}
+      {/* Key Players — top 3 by 2026 impact (runs + wkts) */}
       <div style={{ background: '#0d0f1a', borderRadius: 12, padding: '12px 14px', marginBottom: 6 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#eef0ff', marginBottom: 4 }}>Key Players</div>
-        <div style={{ fontSize: 9, color: '#424960', marginBottom: 10 }}>Highest-valued players in each squad</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#eef0ff' }}>Key Players</div>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 8, color: '#f97316' }}>
+              <img src="/orange-cap.svg" width={14} height={10} alt="Orange Cap" /> Orange Cap
+            </span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 8, color: '#8b5cf6' }}>
+              <img src="/purple-cap.svg" width={14} height={10} alt="Purple Cap" /> Purple Cap
+            </span>
+          </div>
+        </div>
+        <div style={{ fontSize: 9, color: '#424960', marginBottom: 10 }}>Top 3 by IPL 2026 impact</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {[{ team: t1, players: keyT1 }, { team: t2, players: keyT2 }].map(({ team, players }) => (
             <div key={team} style={{ flex: 1 }}>
@@ -190,13 +209,27 @@ export default function PreMatchSheet({ match, onClose }) {
                 <TeamLogo team={team} size={14} /> {team}
               </div>
               {players.map((p, i) => (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 0', borderBottom: '1px solid #1c2035' }}>
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 0', borderBottom: '1px solid #1c2035' }}>
                   <span style={{ fontSize: 9, color: '#424960', width: 10 }}>{i + 1}</span>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 10, color: '#eef0ff', fontWeight: 600, lineHeight: 1.2 }}>{p.n}</div>
-                    <span style={{ fontSize: 8, color: '#7a85a0' }}>{p.r}</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 10, color: '#eef0ff', fontWeight: 600 }}>{p.n}</span>
+                      {p.id === orangeId && <img src="/orange-cap.svg" width={16} height={11} alt="Orange Cap" title="Orange Cap" />}
+                      {p.id === purpleId && <img src="/purple-cap.svg" width={16} height={11} alt="Purple Cap" title="Purple Cap" />}
+                    </div>
+                    <div style={{ fontSize: 8, color: '#7a85a0', marginTop: 1 }}>
+                      {p.mat > 0 ? (
+                        <>
+                          {p.runs > 0 && <span>{p.runs} runs</span>}
+                          {p.runs > 0 && p.wkts > 0 && <span> · </span>}
+                          {p.wkts > 0 && <span>{p.wkts} wkts</span>}
+                          {p.mat > 0 && <span style={{ color: '#424960' }}> ({p.mat}m)</span>}
+                        </>
+                      ) : (
+                        <span style={{ color: '#424960' }}>No stats yet</span>
+                      )}
+                    </div>
                   </div>
-                  <span style={{ fontSize: 10, fontWeight: 700, color: '#f5a623' }}>{p.cr}cr</span>
                 </div>
               ))}
             </div>
