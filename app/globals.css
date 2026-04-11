@@ -14,14 +14,14 @@
   --accent:    #6366f1;
 }
 :root[data-theme="light"] {
-  --bg:        #f0f2ff;
-  --surface:   #ffffff;
-  --surface2:  #e8eaff;
-  --border:    #dde0f5;
-  --text:      #0f1123;
-  --text2:     #5b6785;
-  --text3:     #9ca3af;
-  --accent:    #6366f1;
+  --bg:        #f5f0e8;
+  --surface:   #fdfaf5;
+  --surface2:  #ede8df;
+  --border:    #ddd5c8;
+  --text:      #1c1208;
+  --text2:     #6b5f50;
+  --text3:     #a89880;
+  --accent:    #5b5ef0;
 }
 
 *, *::before, *::after {

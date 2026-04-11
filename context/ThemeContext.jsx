@@ -18,17 +18,17 @@ export const DARK = {
 };
 
 export const LIGHT = {
-  bg:        '#f0f2ff',
-  surface:   '#ffffff',
-  surface2:  '#e8eaff',
-  border:    '#dde0f5',
-  border2:   '#c8cceb',
-  text:      '#0f1123',
-  text2:     '#5b6785',
-  text3:     '#9ca3af',
-  accent:    '#6366f1',
-  accentBg:  '#6366f112',
-  accentText:'#4f52d4',
+  bg:        '#f5f0e8',   // warm cream, never stark white
+  surface:   '#fdfaf5',   // warm off-white
+  surface2:  '#ede8df',   // warm beige for alternates
+  border:    '#ddd5c8',   // warm tan border
+  border2:   '#ccc3b4',   // slightly darker tan
+  text:      '#1c1208',   // near-black with warm tint
+  text2:     '#6b5f50',   // warm brown-gray
+  text3:     '#a89880',   // muted warm
+  accent:    '#5b5ef0',   // indigo stays the same
+  accentBg:  '#5b5ef010',
+  accentText:'#4a4dd4',
 };
 
 export function ThemeProvider({ children }) {

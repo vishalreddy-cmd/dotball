@@ -73,20 +73,35 @@ export default function Shell({ children }) {
             <span className="blink">●</span> Live
           </div>
 
-          {/* Theme toggle */}
+          {/* Theme toggle — pill switch */}
           <button
             onClick={toggle}
             title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
             style={{
-              width: 32, height: 32, borderRadius: '50%',
-              border: `1.5px solid ${t.border2}`,
-              background: t.surface,
-              cursor: 'pointer', flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 15, transition: 'background 0.2s ease',
+              position: 'relative',
+              width: 48, height: 26,
+              borderRadius: 99,
+              border: 'none',
+              background: theme === 'dark' ? '#1c2035' : '#d4c9b8',
+              cursor: 'pointer', flexShrink: 0, padding: 0,
+              transition: 'background 0.25s ease',
             }}
           >
-            {theme === 'dark' ? '☀️' : '🌙'}
+            {/* sliding knob */}
+            <span style={{
+              position: 'absolute',
+              top: 3,
+              left: theme === 'dark' ? 3 : 23,
+              width: 20, height: 20,
+              borderRadius: '50%',
+              background: theme === 'dark' ? '#424960' : '#fdfaf5',
+              boxShadow: '0 1px 4px #0004',
+              transition: 'left 0.22s cubic-bezier(0.4,0,0.2,1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 11,
+            }}>
+              {theme === 'dark' ? '🌙' : '☀️'}
+            </span>
           </button>
 
           {/* Avatar */}
