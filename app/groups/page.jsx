@@ -267,6 +267,10 @@ export default function GroupsPage() {
         const allReady     = readyCount === total && total > 1;
         const isLobbyOpen  = lobbyOpen === ch.id;
 
+        const chMatch    = schedule.find(m => m.id === ch.matchId);
+        const chLocked   = chMatch ? isMatchLocked(chMatch) : false;
+        const myStatus   = memberStatus[user?.uid];
+
         return (
           <div key={ch.id} style={{ background: '#111421', border: '1px solid #1c2035', borderRadius: 14, padding: '12px 13px', marginBottom: 9 }}>
             {/* Top row */}
@@ -341,6 +345,21 @@ export default function GroupsPage() {
                 statuses={statuses}
                 myUid={user?.uid}
               />
+            )}
+
+            {/* Pick CTA — shown when user hasn't picked yet and match isn't locked */}
+            {!chLocked && myStatus !== 'ready' && (
+              <button
+                onClick={() => router.push(`/play/${ch.matchId}/${ch.fmt === 'r3' ? 'r3' : 'xi'}?cid=${ch.id}`)}
+                style={{ width: '100%', marginTop: 10, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(90deg,#6366f1,#8b5cf6)', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}
+              >
+                {ch.fmt === 'r3' ? '🏆 Pick my Top 3' : '⚡ Pick my XI'}
+              </button>
+            )}
+            {myStatus === 'ready' && (
+              <div style={{ marginTop: 10, textAlign: 'center', fontSize: 11, color: '#22c55e', fontWeight: 700 }}>
+                ✓ Your squad is locked in!
+              </div>
             )}
 
             {/* Wager card */}
