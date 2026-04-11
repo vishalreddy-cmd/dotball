@@ -220,17 +220,13 @@ export default function HomePage() {
     return () => clearInterval(id);
   }, []);
 
-  const past   = schedule.filter(m => m.status === 'past');
-  const live   = schedule.filter(m => m.status === 'live');
-  const next   = schedule.filter(m => m.status === 'next');
-  const future = schedule.filter(m => m.status === 'future');
+  const past    = schedule.filter(m => m.status === 'past');
+  const live    = schedule.filter(m => m.status === 'live');
+  const today   = schedule.filter(m => m.status === 'next');   // same day, not yet started
+  const future  = schedule.filter(m => m.status === 'future'); // future days
 
-  const pinnedMatch = live[0] || next[0] || future[0] || null;
-  const collapsible = (() => {
-    if (live.length > 0)  return [...next, ...future];
-    if (next.length > 0)  return future;
-    return future.slice(1);
-  })();
+  // All visible upcoming = today's games + future (collapsible)
+  const upcoming = [...today, ...future];
 
   return (
     <div style={{ padding: '0 14px' }}>
@@ -238,67 +234,71 @@ export default function HomePage() {
       {/* Join challenge banner */}
       <JoinChallengeBanner schedule={schedule} />
 
-      {/* Live match banner — only if user has a challenge for this match */}
-      {live.length > 0 && challenges.some(ch => ch.matchId === live[0].id) && (
-        <div style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 12, border: `1px solid ${t.border}`, background: t.surface }}>
-          <div style={{ background: 'linear-gradient(90deg,#6366f1,#8b5cf6)', padding: '6px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>How am I doing? <span style={{ opacity: .7, fontWeight: 400 }}>Tap to see</span></span>
-            <span style={{ fontSize: 10, fontWeight: 700, color: '#c7d2fe' }}>Live now</span>
-          </div>
-          <div style={{ padding: '12px 14px' }}>
-            <div style={{ fontSize: 10, color: t.text2, marginBottom: 5, textAlign: 'center' }}>Match in progress</div>
-            <div style={{ height: 4, borderRadius: 99, background: t.surface2, overflow: 'hidden' }}>
-              <div style={{ height: 4, borderRadius: 99, background: 'linear-gradient(90deg,#6366f1,#06b6d4)', width: '60%' }} />
-            </div>
-            <div style={{ fontSize: 9, color: t.text2, marginTop: 5, textAlign: 'center' }}>Tap to see your squad points</div>
-          </div>
-        </div>
-      )}
-
       <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 2 }}>IPL 2026</div>
       <div style={{ fontSize: 11, color: t.text2, marginBottom: 13 }}>Pick a match</div>
 
-      {/* Past matches — collapsible */}
+      {/* 1. Live matches — always shown, all of them (handles double-headers) */}
+      {live.length > 0 && (
+        <>
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#6366f1', marginBottom: 7 }}>Live now</div>
+          {live.map(m => (
+            <div key={m.id}>
+              {challenges.some(ch => ch.matchId === m.id) && (
+                <div style={{ borderRadius: 12, padding: '8px 12px', background: '#6366f114', border: '1px solid #6366f133', marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: '#818cf8' }}>How am I doing?</span>
+                  <span style={{ fontSize: 9, color: '#6366f1' }}>Tap match to see →</span>
+                </div>
+              )}
+              <MatchCard match={m} onInfo={setPreMatch} />
+            </div>
+          ))}
+        </>
+      )}
+
+      {/* 2. Today's upcoming + future — all shown, future collapsible */}
+      {upcoming.length > 0 && (
+        <>
+          <div style={{ fontSize: 10, fontWeight: 600, color: '#f5a623', marginBottom: 7, marginTop: live.length > 0 ? 12 : 0 }}>
+            {today.length > 0 ? `Today · ${today.length} match${today.length > 1 ? 'es' : ''}` : 'Upcoming'}
+          </div>
+          {/* Today's matches always visible */}
+          {today.map(m => <MatchCard key={m.id} match={m} onInfo={setPreMatch} />)}
+
+          {/* Future matches collapsible */}
+          {future.length > 0 && (
+            <>
+              <button
+                onClick={() => setUpcomingOpen(o => !o)}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid #6366f133', background: '#6366f108', cursor: 'pointer', marginBottom: 9, marginTop: today.length > 0 ? 4 : 0 }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#818cf8' }}>More upcoming</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 9, color: '#818cf8aa', background: '#6366f118', padding: '2px 8px', borderRadius: 99 }}>{future.length} matches</span>
+                  <span style={{ color: '#818cf8' }}>{upcomingOpen ? '▲' : '▼'}</span>
+                </div>
+              </button>
+              {upcomingOpen && future.map(m => <MatchCard key={m.id} match={m} onInfo={setPreMatch} />)}
+            </>
+          )}
+        </>
+      )}
+
+      {/* 3. Past matches — collapsible, at the bottom */}
       {past.length > 0 && (
         <>
-          <button
-            onClick={() => setPastOpen(o => !o)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: `1px solid ${t.border}`, background: t.surface, cursor: 'pointer', marginBottom: 9 }}
-          >
-            <span style={{ fontSize: 11, fontWeight: 600, color: t.text3 }}>Past matches</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 9, color: t.text3, background: t.surface2, padding: '2px 8px', borderRadius: 99 }}>{past.length} matches</span>
-              <span style={{ color: t.text3 }}>{pastOpen ? '▲' : '▼'}</span>
-            </div>
-          </button>
-          {pastOpen && past.map(m => <MatchCard key={m.id} match={m} dim />)}
-        </>
-      )}
-
-      {/* Pinned next match */}
-      {pinnedMatch && (
-        <>
-          <div style={{ fontSize: 10, fontWeight: 600, color: live.length > 0 ? '#6366f1' : '#f5a623', marginBottom: 7, marginTop: 4 }}>
-            {live.length > 0 ? 'Live now' : 'Next match'}
+          <div style={{ marginTop: 16 }}>
+            <button
+              onClick={() => setPastOpen(o => !o)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: `1px solid ${t.border}`, background: t.surface, cursor: 'pointer', marginBottom: 9 }}
+            >
+              <span style={{ fontSize: 11, fontWeight: 600, color: t.text3 }}>Past matches</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 9, color: t.text3, background: t.surface2, padding: '2px 8px', borderRadius: 99 }}>{past.length} matches</span>
+                <span style={{ color: t.text3 }}>{pastOpen ? '▲' : '▼'}</span>
+              </div>
+            </button>
+            {pastOpen && past.map(m => <MatchCard key={m.id} match={m} dim />)}
           </div>
-          <MatchCard match={pinnedMatch} onInfo={setPreMatch} />
-        </>
-      )}
-
-      {/* Upcoming — collapsible */}
-      {collapsible.length > 0 && (
-        <>
-          <button
-            onClick={() => setUpcomingOpen(o => !o)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid #6366f133', background: '#6366f108', cursor: 'pointer', marginBottom: 9, marginTop: 4 }}
-          >
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#818cf8' }}>Upcoming matches</span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 9, color: '#818cf8aa', background: '#6366f118', padding: '2px 8px', borderRadius: 99 }}>{collapsible.length} matches</span>
-              <span style={{ color: '#818cf8' }}>{upcomingOpen ? '▲' : '▼'}</span>
-            </div>
-          </button>
-          {upcomingOpen && collapsible.map(m => <MatchCard key={m.id} match={m} onInfo={setPreMatch} />)}
         </>
       )}
 
