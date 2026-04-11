@@ -35,15 +35,14 @@ export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState('dark');
 
   useEffect(() => {
-    const saved = (typeof window !== 'undefined' && localStorage.getItem('db_theme')) || 'dark';
-    setTheme(saved);
-    document.documentElement.setAttribute('data-theme', saved);
+    // Always start in dark mode — clear any stale saved preference
+    localStorage.removeItem('db_theme');
+    document.documentElement.setAttribute('data-theme', 'dark');
   }, []);
 
   function toggle() {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
-    localStorage.setItem('db_theme', next);
     document.documentElement.setAttribute('data-theme', next);
   }
 

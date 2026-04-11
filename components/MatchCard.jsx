@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import TeamLogo from './TeamLogo';
 import { parseMatchUTC } from '@/lib/schedule';
+import { useTheme } from '@/context/ThemeContext';
 import data from '@/data/squads.json';
 
 const T = data.teams;
@@ -37,6 +38,7 @@ function useLiveCountdown(dateStr, timeStr, status) {
 
 export default function MatchCard({ match, dim = false, onInfo }) {
   const router = useRouter();
+  const { t } = useTheme();
   const { t1, t2, day, date, time, venue, status, res } = match;
   const isLive = status === 'live';
   const isNext = status === 'next';
@@ -45,8 +47,8 @@ export default function MatchCard({ match, dim = false, onInfo }) {
   return (
     <div style={{
       borderRadius: 14, overflow: 'hidden', marginBottom: 10,
-      border: isLive ? '1.5px solid rgba(99,102,241,.4)' : '1px solid #1c2035',
-      background: `linear-gradient(135deg,${T[t1]?.dbg || '#111421'} 0%,#111421 50%,${T[t2]?.dbg || '#111421'} 100%)`,
+      border: isLive ? '1.5px solid rgba(99,102,241,.4)' : `1px solid ${t.border}`,
+      background: `linear-gradient(135deg,${T[t1]?.dbg || t.surface} 0%,${t.surface} 50%,${T[t2]?.dbg || t.surface} 100%)`,
       cursor: isLive ? 'pointer' : 'default',
     }}>
       {isLive && (
@@ -55,12 +57,12 @@ export default function MatchCard({ match, dim = false, onInfo }) {
         </div>
       )}
       {dim && res && (
-        <div style={{ background: '#0d0f1a', padding: '4px 13px', fontSize: 9, color: '#22c55e', fontWeight: 600 }}>
+        <div style={{ background: t.surface2, padding: '4px 13px', fontSize: 9, color: '#22c55e', fontWeight: 600 }}>
           {res.winner} won by {res.margin}
         </div>
       )}
       {dim && !res && (
-        <div style={{ background: '#0d0f1a', padding: '3px 13px', fontSize: 9, color: '#424960' }}>Completed</div>
+        <div style={{ background: t.surface2, padding: '3px 13px', fontSize: 9, color: t.text3 }}>Completed</div>
       )}
 
       <div style={{ padding: '11px 13px 10px' }}>
@@ -70,20 +72,19 @@ export default function MatchCard({ match, dim = false, onInfo }) {
             <TeamLogo team={t1} size={44} />
           </div>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: 9, color: '#7a85a0', marginBottom: 3 }}>{day} {date} · {time}</div>
+            <div style={{ fontSize: 9, color: t.text2, marginBottom: 3 }}>{day} {date} · {time}</div>
             {isLive
-              ? <div style={{ fontSize: 13, fontWeight: 800, color: '#eef0ff' }}>Live <span style={{ fontSize: 10, color: '#7a85a0', fontWeight: 400 }}>in progress</span></div>
+              ? <div style={{ fontSize: 13, fontWeight: 800, color: t.text }}>Live <span style={{ fontSize: 10, color: t.text2, fontWeight: 400 }}>in progress</span></div>
               : res
-                ? <div style={{ fontSize: 12, fontWeight: 800, color: '#eef0ff' }}>{res.t1s} <span style={{ color: '#424960', fontWeight: 400 }}>vs</span> {res.t2s}</div>
-                : <div style={{ fontSize: 18, fontWeight: 800, color: '#eef0ff' }}>vs</div>
+                ? <div style={{ fontSize: 12, fontWeight: 800, color: t.text }}>{res.t1s} <span style={{ color: t.text3, fontWeight: 400 }}>vs</span> {res.t2s}</div>
+                : <div style={{ fontSize: 18, fontWeight: 800, color: t.text }}>vs</div>
             }
-            <div style={{ fontSize: 8, color: '#424960', marginTop: 2 }}>{venue}</div>
+            <div style={{ fontSize: 8, color: t.text3, marginTop: 2 }}>{venue}</div>
 
-            {/* Live ticking countdown */}
             {!isLive && !dim && countdown && (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, padding: '3px 9px', borderRadius: 99, background: isNext ? '#f59e0b18' : '#1c2035', border: `1px solid ${isNext ? '#f59e0b44' : '#1c2035'}` }}>
-                <span style={{ fontSize: 8, color: isNext ? '#f5a623' : '#7a85a0' }} className={isNext ? 'blink' : ''}>●</span>
-                <span style={{ fontSize: 9, fontWeight: 600, color: isNext ? '#f5a623' : '#7a85a0', fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, padding: '3px 9px', borderRadius: 99, background: isNext ? '#f59e0b18' : t.surface2, border: `1px solid ${isNext ? '#f59e0b44' : t.border}` }}>
+                <span style={{ fontSize: 8, color: isNext ? '#f5a623' : t.text2 }} className={isNext ? 'blink' : ''}>●</span>
+                <span style={{ fontSize: 9, fontWeight: 600, color: isNext ? '#f5a623' : t.text2, fontVariantNumeric: 'tabular-nums' }}>
                   Locks in {countdown}
                 </span>
               </div>
@@ -98,7 +99,7 @@ export default function MatchCard({ match, dim = false, onInfo }) {
         <div style={{ display: 'flex', gap: 7 }}>
           {dim ? (
             <div style={{ display: 'flex', gap: 7, width: '100%' }}>
-              <div style={{ flex: 1, padding: 10, borderRadius: 9, background: '#1c2035', textAlign: 'center', fontSize: 11, color: '#424960', fontWeight: 600 }}>
+              <div style={{ flex: 1, padding: 10, borderRadius: 9, background: t.surface2, textAlign: 'center', fontSize: 11, color: t.text3, fontWeight: 600 }}>
                 Match completed
               </div>
               <button
@@ -113,7 +114,7 @@ export default function MatchCard({ match, dim = false, onInfo }) {
               {onInfo && (
                 <button
                   onClick={() => onInfo(match)}
-                  style={{ padding: '10px 12px', borderRadius: 9, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
+                  style={{ padding: '10px 12px', borderRadius: 9, border: `1px solid ${t.border}`, background: 'transparent', color: t.text2, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}
                   title="Pre-match analysis"
                 >
                   📊
