@@ -18,7 +18,7 @@ function fmtSecs(s) {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-function JoinChallengeBanner({ pinnedMatch }) {
+function JoinChallengeBanner({ schedule }) {
   const { user, profile, challenges, setChallenges } = useAuth();
   const { t }   = useTheme();
   const toast   = useToast();
@@ -26,13 +26,14 @@ function JoinChallengeBanner({ pinnedMatch }) {
   const [code,  setCode]  = useState('');
   const [busy,  setBusy]  = useState(false);
   const [secs,  setSecs]  = useState(null);
+  const [timerMatchId, setTimerMatchId] = useState(null);
 
-  const locked = pinnedMatch && isMatchLocked(pinnedMatch);
-
-  // Tick countdown when within 180 s of match start
+  // Show countdown for the next upcoming match (not necessarily the live one)
+  const nextMatch = schedule.find(m => m.status === 'next') || schedule.find(m => m.status === 'future');
   useEffect(() => {
-    if (!pinnedMatch || locked) return;
-    const matchUTC = parseMatchUTC(pinnedMatch.date, pinnedMatch.time);
+    if (!nextMatch) return;
+    const matchUTC = parseMatchUTC(nextMatch.date, nextMatch.time);
+    setTimerMatchId(nextMatch.id);
     function tick() {
       const s = Math.floor((matchUTC - Date.now()) / 1000);
       setSecs(s >= 0 ? s : 0);
@@ -40,13 +41,12 @@ function JoinChallengeBanner({ pinnedMatch }) {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [pinnedMatch?.id, locked]);
+  }, [nextMatch?.id]);
 
   async function join() {
     const c = code.trim().toUpperCase();
     if (c.length < 4) { toast('Enter a valid challenge code', false); return; }
     if (!user)        { toast('Please sign in first', false); return; }
-    if (locked)       { toast('Match has started — new challenges are closed', false); return; }
     setBusy(true);
     try {
       const ids = [fmtDocId(c, 'xi'), fmtDocId(c, 'r3')];
@@ -59,6 +59,14 @@ function JoinChallengeBanner({ pinnedMatch }) {
         if (snap.exists()) { found = { id: fid, ...snap.data() }; break; }
       }
       if (!found) { toast('Challenge not found — check the code', false); setBusy(false); return; }
+
+      // Check lock status of THIS challenge's specific match, not the current live match
+      const challengeMatch = schedule.find(m => m.id === found.matchId);
+      if (challengeMatch && isMatchLocked(challengeMatch)) {
+        toast(`${found.matchLabel || 'That match'} has already started — picks are locked`, false);
+        setBusy(false); return;
+      }
+
       await updateDoc(doc(db, 'challenges', found.id), {
         members:     arrayUnion(user.uid),
         memberNames: arrayUnion(profile?.name || 'Player'),
@@ -71,7 +79,7 @@ function JoinChallengeBanner({ pinnedMatch }) {
     setBusy(false);
   }
 
-  const showTimer = secs !== null && secs <= 180 && secs > 0 && !locked;
+  const showTimer = secs !== null && secs <= 180 && secs > 0;
   const canJoin   = code.length >= 4;
 
   return (
@@ -82,10 +90,10 @@ function JoinChallengeBanner({ pinnedMatch }) {
           <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>Have a code? Join here</div>
           <div style={{ fontSize: 10, color: t.text2, marginTop: 1 }}>Enter the code your friend shared</div>
         </div>
-        {/* Countdown pill when < 3 min */}
+        {/* Countdown pill — next match locking soon */}
         {showTimer && (
           <div style={{ padding: '4px 10px', borderRadius: 99, background: '#fb923c18', border: '1px solid #fb923c44', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ fontSize: 9, color: '#fb923c', fontWeight: 700 }}>Locks in</span>
+            <span style={{ fontSize: 9, color: '#fb923c', fontWeight: 700 }}>Next locks in</span>
             <span style={{ fontSize: 13, fontWeight: 900, color: '#fb923c', fontVariantNumeric: 'tabular-nums' }}>{fmtSecs(secs)}</span>
           </div>
         )}
@@ -110,7 +118,7 @@ function JoinChallengeBanner({ pinnedMatch }) {
           onClick={join}
           disabled={busy || !canJoin}
           style={{
-            padding: '10px 16px', borderRadius: 9, border: 'none',
+            padding: '10px 16px', borderRadius: 9,
             background: canJoin ? '#6366f1' : t.surface2,
             color: canJoin ? '#fff' : t.text3,
             fontWeight: 700, fontSize: 12,
@@ -122,13 +130,6 @@ function JoinChallengeBanner({ pinnedMatch }) {
           {busy ? '...' : 'Join'}
         </button>
       </div>
-
-      {/* Subtle note when match is live */}
-      {locked && (
-        <div style={{ fontSize: 9, color: '#ef4444', marginTop: 7, textAlign: 'center' }}>
-          Match in progress — new joins are closed, but you can still view existing challenges
-        </div>
-      )}
     </div>
   );
 }
@@ -235,7 +236,7 @@ export default function HomePage() {
     <div style={{ padding: '0 14px' }}>
 
       {/* Join challenge banner */}
-      <JoinChallengeBanner pinnedMatch={pinnedMatch} />
+      <JoinChallengeBanner schedule={schedule} />
 
       {/* Live match banner — only if user has a challenge for this match */}
       {live.length > 0 && challenges.some(ch => ch.matchId === live[0].id) && (
