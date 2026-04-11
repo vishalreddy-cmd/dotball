@@ -8,7 +8,7 @@ import { buildSchedule, isMatchLocked } from '@/lib/schedule';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, getDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore';
 import PlayerCard from '@/components/PlayerCard';
 import CreditBar from '@/components/CreditBar';
 import RoleAssigner from '@/components/RoleAssigner';
@@ -179,6 +179,17 @@ export default function XIPage() {
       };
       await setDoc(doc(db, 'squads', `${matchId}_${user.uid}_xi`), squadData);
       sessionStorage.setItem(`xi_${matchId}`, JSON.stringify(squadData));
+
+      // Mark status as 'ready' in all challenges for this match
+      const myChallenges = (challenges || []).filter(ch => ch.matchId === matchId);
+      if (myChallenges.length > 0) {
+        await Promise.all(myChallenges.map(ch =>
+          updateDoc(doc(db, 'challenges', ch.id), {
+            [`memberStatus.${user.uid}`]: 'ready',
+          }).catch(() => {})
+        ));
+      }
+
       toast('Squad saved to dotball!');
     } catch (e) {
       toast(e.code === 'permission-denied' ? 'Firebase rules need updating — check console' : `Save failed: ${e.message}`, false);

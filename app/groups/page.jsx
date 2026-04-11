@@ -1,10 +1,10 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, arrayUnion, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, arrayUnion, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { buildSchedule, isMatchLocked } from '@/lib/schedule';
 import HeadToHead from '@/components/HeadToHead';
 import WagerCard from '@/components/WagerCard';
@@ -20,36 +20,114 @@ const genCode = (fmt) => {
 const codeInfo = (code) =>
   [...XI_CODES, ...R3_CODES].find(c => c.w === code);
 
-// Firestore doc ID encodes format to avoid collisions between XI and R3 codes
 const docId = (code, fmt) => `${fmt}_${code}`;
+
+// Status config
+const STATUS = {
+  ready:   { dot: '#22c55e', label: 'Squad locked',   icon: '🟢' },
+  pending: { dot: '#ef4444', label: 'Yet to pick',    icon: '🔴' },
+};
+
+function MemberLobby({ challenge, statuses, myUid }) {
+  const members     = challenge.members     || [];
+  const memberNames = challenge.memberNames || [];
+  const memberStatus = statuses[challenge.id] || {};
+
+  const readyCount = members.filter(uid => memberStatus[uid] === 'ready').length;
+
+  return (
+    <div style={{ marginTop: 10, borderRadius: 10, background: '#0d0f1a', border: '1px solid #1c2035', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 11px', borderBottom: '1px solid #1c2035' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#7a85a0' }}>Squad status</span>
+        <span style={{ fontSize: 10, color: readyCount === members.length ? '#22c55e' : '#f59e0b', fontWeight: 700 }}>
+          {readyCount}/{members.length} ready
+        </span>
+      </div>
+      {/* Member rows */}
+      {members.map((uid, i) => {
+        const name   = memberNames[i] || 'Player';
+        const status = memberStatus[uid] === 'ready' ? STATUS.ready : STATUS.pending;
+        const isMe   = uid === myUid;
+        return (
+          <div
+            key={uid}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '7px 11px',
+              borderBottom: i < members.length - 1 ? '1px solid #1c203566' : 'none',
+              background: isMe ? '#6366f108' : 'transparent',
+            }}
+          >
+            {/* Avatar circle */}
+            <div style={{
+              width: 26, height: 26, borderRadius: '50%',
+              background: isMe ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : '#1c2035',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 9, fontWeight: 800, color: isMe ? '#fff' : '#7a85a0', flexShrink: 0,
+            }}>
+              {name.substring(0, 2).toUpperCase()}
+            </div>
+            {/* Name */}
+            <div style={{ flex: 1, fontSize: 11, fontWeight: 600, color: '#eef0ff' }}>
+              {name}{isMe && <span style={{ fontSize: 9, color: '#818cf8', marginLeft: 4 }}>you</span>}
+            </div>
+            {/* Status */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: status.dot, display: 'inline-block' }} />
+              <span style={{ fontSize: 9, color: status.dot, fontWeight: 600 }}>{status.label}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function GroupsPage() {
   const { user, profile, challenges, setChallenges } = useAuth();
   const toast  = useToast();
   const router = useRouter();
 
-  const schedule   = useMemo(() => buildSchedule(), []);
-  // The "active" match is the next upcoming or currently live one
+  const schedule    = useMemo(() => buildSchedule(), []);
   const activeMatch = useMemo(() =>
     schedule.find(m => m.status === 'live') ||
     schedule.find(m => m.status === 'next') ||
     schedule.find(m => m.status === 'future'),
   [schedule]);
 
-  const [mode,     setMode]     = useState(null); // null | create | join
-  const [chName,   setChName]   = useState('');
-  const [chFmt,    setChFmt]    = useState('xi');
-  const [chCode,   setChCode]   = useState('');
-  const [defOpen,  setDefOpen]  = useState(null);
-  const [busy,     setBusy]     = useState(false);
-  const [shareInfo, setShareInfo] = useState(null); // { code, fmt, name } shown after creation
-  const [copied,   setCopied]   = useState(false);
-  const [h2hChallenge, setH2hChallenge] = useState(null); // challenge to show H2H for
+  const [mode,       setMode]       = useState(null);
+  const [chName,     setChName]     = useState('');
+  const [chFmt,      setChFmt]      = useState('xi');
+  const [chCode,     setChCode]     = useState('');
+  const [defOpen,    setDefOpen]    = useState(null);
+  const [busy,       setBusy]       = useState(false);
+  const [shareInfo,  setShareInfo]  = useState(null);
+  const [copied,     setCopied]     = useState(false);
+  const [h2hChallenge, setH2hChallenge] = useState(null);
+  const [lobbyOpen,  setLobbyOpen]  = useState(null); // challengeId that has lobby expanded
+  const [statuses,   setStatuses]   = useState({}); // { [challengeId]: { [uid]: 'ready'|'pending' } }
 
-  // Only show challenges for the active match (or show all if no active match)
   const activeChallenges = activeMatch
     ? challenges.filter(ch => ch.matchId === activeMatch.id)
     : challenges;
+
+  // Subscribe to each challenge doc for live member status
+  useEffect(() => {
+    if (!activeChallenges.length) return;
+    const unsubs = activeChallenges.map(ch =>
+      onSnapshot(doc(db, 'challenges', ch.id), snap => {
+        if (snap.exists()) {
+          const d = snap.data();
+          setStatuses(prev => ({
+            ...prev,
+            [ch.id]: d.memberStatus || {},
+          }));
+        }
+      })
+    );
+    return () => unsubs.forEach(u => u());
+  }, [activeChallenges.length, activeMatch?.id]);
 
   async function createChallenge() {
     if (!chName.trim())  { toast('Enter a challenge name', false); return; }
@@ -65,13 +143,15 @@ export default function GroupsPage() {
         matchLabel: `${activeMatch.t1} vs ${activeMatch.t2}`,
         owner: user.uid, ownerName: profile?.name || 'Player',
         members: [user.uid], memberNames: [profile?.name || 'Player'],
+        memberStatus: { [user.uid]: 'pending' },
         createdAt: serverTimestamp(),
       });
       const newCh = {
         id, name: chName.trim(), code: ci.w, fmt: chFmt,
         matchId: activeMatch.id,
         matchLabel: `${activeMatch.t1} vs ${activeMatch.t2}`,
-        members: [user.uid], own: true,
+        members: [user.uid], memberNames: [profile?.name || 'Player'],
+        own: true,
       };
       setChallenges(prev => [...prev, newCh]);
       setShareInfo({ code: ci.w, fmt: chFmt, def: ci.d, name: chName.trim() });
@@ -85,7 +165,6 @@ export default function GroupsPage() {
     if (code.length < 4) { toast('Enter a valid challenge code', false); return; }
     if (!user)           { toast('Please sign in first', false); return; }
 
-    // Try both formats (user doesn't need to know which it is)
     const ids = [docId(code, 'xi'), docId(code, 'r3')];
     setBusy(true);
     try {
@@ -97,11 +176,12 @@ export default function GroupsPage() {
         const snap = await getDoc(doc(db, 'challenges', id));
         if (snap.exists()) { found = { id, ...snap.data() }; break; }
       }
-      if (!found) { toast('Challenge not found — check the code and try again', false); setBusy(false); return; }
+      if (!found) { toast('Challenge not found — check the code', false); setBusy(false); return; }
 
       await updateDoc(doc(db, 'challenges', found.id), {
-        members: arrayUnion(user.uid),
-        memberNames: arrayUnion(profile?.name || 'Player'),
+        members:      arrayUnion(user.uid),
+        memberNames:  arrayUnion(profile?.name || 'Player'),
+        [`memberStatus.${user.uid}`]: 'pending',
       });
       setChallenges(prev => [...prev, { ...found, own: false }]);
       setChCode(''); setMode(null);
@@ -123,9 +203,7 @@ export default function GroupsPage() {
       await navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (e) {
-      toast('Could not copy — try manually', false);
-    }
+    } catch { toast('Could not copy — try manually', false); }
   }
 
   return (
@@ -142,7 +220,7 @@ export default function GroupsPage() {
         </div>
       )}
 
-      {/* Share panel — shown right after creation */}
+      {/* Share panel */}
       {shareInfo && (
         <div style={{ background: 'linear-gradient(135deg,#0c1040,#1a0f30)', border: '1px solid #6366f144', borderRadius: 14, padding: 15, marginBottom: 14 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#7a85a0', letterSpacing: 0.5, marginBottom: 10 }}>
@@ -174,61 +252,98 @@ export default function GroupsPage() {
             >
               {copied ? '✓ Copied!' : 'Copy code'}
             </button>
-            <button
-              onClick={() => setShareInfo(null)}
-              style={{ background: 'transparent', border: 'none', color: '#424960', fontSize: 11, cursor: 'pointer' }}
-            >
+            <button onClick={() => setShareInfo(null)} style={{ background: 'transparent', border: 'none', color: '#424960', fontSize: 11, cursor: 'pointer' }}>
               Dismiss
             </button>
           </div>
         </div>
       )}
 
-      {/* Challenge list for active match */}
-      {activeChallenges.length > 0 ? activeChallenges.map(ch => (
-        <div key={ch.id} style={{ background: '#111421', border: '1px solid #1c2035', borderRadius: 14, padding: '12px 13px', marginBottom: 9, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-          <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
-            {ch.own ? '👑' : '🤝'}
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#eef0ff' }}>{ch.name}</div>
-            <div style={{ fontSize: 10, color: '#7a85a0' }}>{ch.fmt === 'xi' ? 'Classic XI' : 'Top 3'} · {ch.members?.length || 1} members</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }}>
-              <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 4, fontFamily: 'Georgia,serif', color: '#f5a623' }}>{ch.code}</div>
-              <button
-                onClick={() => setDefOpen(defOpen === ch.id ? null : ch.id)}
-                style={{ width: 18, height: 18, borderRadius: '50%', background: defOpen === ch.id ? '#6366f1' : '#0d0f1a', border: `1px solid ${defOpen === ch.id ? '#6366f1' : '#1c2035'}`, color: defOpen === ch.id ? '#fff' : '#424960', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              >i</button>
-            </div>
-            {defOpen === ch.id && codeInfo(ch.code) && (
-              <div style={{ background: '#0d0f1a', border: '1px solid #1c2035', borderRadius: 8, padding: '8px 10px', marginTop: 6, fontSize: 10, color: '#818cf8', lineHeight: 1.5 }}>
-                <strong style={{ color: '#a5b4fc' }}>{ch.code}</strong> — {codeInfo(ch.code).d}
+      {/* Challenge list */}
+      {activeChallenges.length > 0 ? activeChallenges.map(ch => {
+        const memberStatus = statuses[ch.id] || {};
+        const readyCount   = (ch.members || []).filter(uid => memberStatus[uid] === 'ready').length;
+        const total        = ch.members?.length || 1;
+        const allReady     = readyCount === total && total > 1;
+        const isLobbyOpen  = lobbyOpen === ch.id;
+
+        return (
+          <div key={ch.id} style={{ background: '#111421', border: '1px solid #1c2035', borderRadius: 14, padding: '12px 13px', marginBottom: 9 }}>
+            {/* Top row */}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                {ch.own ? '👑' : '🤝'}
               </div>
-            )}
-            {/* Action buttons on challenge cards */}
-            <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-              {ch.own && (
-                <button
-                  onClick={() => {
-                    const info = codeInfo(ch.code);
-                    setShareInfo({ code: ch.code, fmt: ch.fmt, def: info?.d, name: ch.name });
-                    setCopied(false);
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid #6366f133', background: '#6366f108', color: '#818cf8', fontSize: 10, cursor: 'pointer' }}
-                >
-                  Share code
-                </button>
-              )}
-              {(ch.members?.length || 1) > 1 && (
-                <button
-                  onClick={() => setH2hChallenge(ch)}
-                  style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid #06b6d433', background: '#06b6d408', color: '#06b6d4', fontSize: 10, cursor: 'pointer' }}
-                >
-                  ⚔ Compare squads
-                </button>
-              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#eef0ff' }}>{ch.name}</div>
+                <div style={{ fontSize: 10, color: '#7a85a0' }}>{ch.fmt === 'xi' ? 'Classic XI' : 'Top 3'} · {total} member{total !== 1 ? 's' : ''}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }}>
+                  <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 4, fontFamily: 'Georgia,serif', color: '#f5a623' }}>{ch.code}</div>
+                  <button
+                    onClick={() => setDefOpen(defOpen === ch.id ? null : ch.id)}
+                    style={{ width: 18, height: 18, borderRadius: '50%', background: defOpen === ch.id ? '#6366f1' : '#0d0f1a', border: `1px solid ${defOpen === ch.id ? '#6366f1' : '#1c2035'}`, color: defOpen === ch.id ? '#fff' : '#424960', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  >i</button>
+                </div>
+                {defOpen === ch.id && codeInfo(ch.code) && (
+                  <div style={{ background: '#0d0f1a', border: '1px solid #1c2035', borderRadius: 8, padding: '8px 10px', marginTop: 6, fontSize: 10, color: '#818cf8', lineHeight: 1.5 }}>
+                    <strong style={{ color: '#a5b4fc' }}>{ch.code}</strong> — {codeInfo(ch.code).d}
+                  </div>
+                )}
+              </div>
+              {ch.own && <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 99, background: '#6366f118', color: '#818cf8', border: '1px solid #6366f133', fontWeight: 700, flexShrink: 0 }}>Owner</span>}
             </div>
+
+            {/* Ready count pill + lobby toggle */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+              {/* Ready pill */}
+              <div
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  padding: '4px 9px', borderRadius: 99,
+                  background: allReady ? '#14532d22' : '#1c2035',
+                  border: `1px solid ${allReady ? '#22c55e44' : '#1c2035'}`,
+                  cursor: 'pointer',
+                }}
+                onClick={() => setLobbyOpen(isLobbyOpen ? null : ch.id)}
+              >
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: allReady ? '#22c55e' : readyCount > 0 ? '#f59e0b' : '#ef4444' }} />
+                <span style={{ fontSize: 9, color: allReady ? '#22c55e' : readyCount > 0 ? '#f59e0b' : '#ef4444', fontWeight: 700 }}>
+                  {readyCount}/{total} squads ready
+                </span>
+                <span style={{ fontSize: 9, color: '#424960' }}>{isLobbyOpen ? '▲' : '▼'}</span>
+              </div>
+
+              {/* Action buttons */}
+              <div style={{ display: 'flex', gap: 5, marginLeft: 'auto' }}>
+                {ch.own && (
+                  <button
+                    onClick={() => { const info = codeInfo(ch.code); setShareInfo({ code: ch.code, fmt: ch.fmt, def: info?.d, name: ch.name }); setCopied(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                    style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid #6366f133', background: '#6366f108', color: '#818cf8', fontSize: 10, cursor: 'pointer' }}
+                  >
+                    Share
+                  </button>
+                )}
+                {total > 1 && (
+                  <button
+                    onClick={() => setH2hChallenge(ch)}
+                    style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid #06b6d433', background: '#06b6d408', color: '#06b6d4', fontSize: 10, cursor: 'pointer' }}
+                  >
+                    ⚔ Compare
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Challenge lobby — expandable */}
+            {isLobbyOpen && (
+              <MemberLobby
+                challenge={ch}
+                statuses={statuses}
+                myUid={user?.uid}
+              />
+            )}
+
+            {/* Wager card */}
             <WagerCard
               challenge={ch}
               matchId={activeMatch?.id}
@@ -237,15 +352,14 @@ export default function GroupsPage() {
               matchLocked={activeMatch ? isMatchLocked(activeMatch) : false}
             />
           </div>
-          {ch.own && <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 99, background: '#6366f118', color: '#818cf8', border: '1px solid #6366f133', fontWeight: 700, flexShrink: 0 }}>Owner</span>}
-        </div>
-      )) : (
+        );
+      }) : (
         <div style={{ background: '#111421', border: '1px solid #1c2035', borderRadius: 14, padding: 20, textAlign: 'center', marginBottom: 14 }}>
           <div style={{ fontSize: 28, marginBottom: 8 }}>🤝</div>
           <div style={{ fontSize: 12, color: '#7a85a0' }}>
             {activeMatch
               ? `No challenge yet for ${activeMatch.t1} vs ${activeMatch.t2}. Create one or join a friend's!`
-              : 'No challenges yet. Create one or join a friend\'s!'}
+              : "No challenges yet. Create one or join a friend's!"}
           </div>
         </div>
       )}

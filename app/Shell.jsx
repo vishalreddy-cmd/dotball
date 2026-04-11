@@ -1,6 +1,7 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import Onboarding from '@/components/Onboarding';
 import AuthScreen from '@/components/AuthScreen';
 import NavBar from '@/components/NavBar';
@@ -9,6 +10,7 @@ import { usePush } from '@/lib/usePush';
 
 export default function Shell({ children }) {
   const { user, profile, avatar, obDone, loading } = useAuth();
+  const { theme, toggle, t } = useTheme();
   usePush(user?.uid);
   const pathname = usePathname();
   const router   = useRouter();
@@ -16,12 +18,12 @@ export default function Shell({ children }) {
   /* Loading splash */
   if (loading) {
     return (
-      <div style={{ position: 'fixed', inset: 0, background: '#08090f', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, zIndex: 999 }}>
-        <div style={{ fontSize: 28, fontWeight: 900, color: '#eef0ff', display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ position: 'fixed', inset: 0, background: t.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, zIndex: 999 }}>
+        <div style={{ fontSize: 28, fontWeight: 900, color: t.text, display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 11, height: 11, borderRadius: '50%', background: '#6366f1' }} />
           dotball
         </div>
-        <div style={{ fontSize: 12, color: '#424960' }}>IPL 2026 fantasy</div>
+        <div style={{ fontSize: 12, color: t.text3 }}>IPL 2026 fantasy</div>
       </div>
     );
   }
@@ -33,18 +35,22 @@ export default function Shell({ children }) {
   if (!user) return <AuthScreen />;
 
   /* App shell */
-  const isPlay    = pathname.startsWith('/play/');
-  const initials  = (profile?.name || '?').substring(0, 2).toUpperCase();
+  const isPlay   = pathname.startsWith('/play/');
+  const initials = (profile?.name || '?').substring(0, 2).toUpperCase();
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', maxWidth: 430, margin: '0 auto', position: 'relative' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', maxWidth: 430, margin: '0 auto', position: 'relative', background: t.bg }}>
       {/* Header */}
       <header style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 16px 10px', background: '#08090f',
-        borderBottom: '1px solid #1c2035', flexShrink: 0,
+        padding: '12px 16px 10px',
+        background: t.bg,
+        borderBottom: `1px solid ${t.border}`,
+        flexShrink: 0,
         paddingTop: 'max(12px, env(safe-area-inset-top))',
+        transition: 'background 0.2s ease, border-color 0.2s ease',
       }}>
+        {/* Left: back arrow (play pages) or logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {isPlay && (
             <button
@@ -54,19 +60,41 @@ export default function Shell({ children }) {
               ←
             </button>
           )}
-          <div style={{ fontSize: 19, fontWeight: 900, color: '#eef0ff', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{ fontSize: 19, fontWeight: 900, color: t.text, letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: 7 }}>
             <div style={{ width: 9, height: 9, borderRadius: '50%', background: '#6366f1', flexShrink: 0 }} />
             dotball
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+
+        {/* Right: live badge + theme toggle + avatar */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Live badge */}
           <div style={{ fontSize: 8, padding: '3px 8px', borderRadius: 99, background: '#22c55e18', color: '#22c55e', border: '1px solid #22c55e33', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
             <span className="blink">●</span> Live
           </div>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggle}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            style={{
+              width: 32, height: 32, borderRadius: '50%',
+              border: `1.5px solid ${t.border2}`,
+              background: t.surface,
+              cursor: 'pointer', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 15, transition: 'background 0.2s ease',
+            }}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+
+          {/* Avatar */}
           <button
             onClick={() => router.push('/profile')}
             style={{
-              width: 32, height: 32, borderRadius: '50%', border: '2px solid #6366f133',
+              width: 32, height: 32, borderRadius: '50%',
+              border: '2px solid #6366f133',
               overflow: 'hidden', cursor: 'pointer', flexShrink: 0,
               background: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',

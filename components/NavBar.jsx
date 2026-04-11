@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 
 const TABS = [
   { id: 'home',    href: '/',        icon: '🏏', label: 'Matches'  },
@@ -12,9 +13,10 @@ const TABS = [
 ];
 
 export default function NavBar() {
-  const pathname   = usePathname();
+  const pathname = usePathname();
   const { challenges } = useAuth();
-  const grpBadge   = challenges.length > 0; // simple badge indicator
+  const { t } = useTheme();
+  const grpBadge = challenges.length > 0;
 
   const active = (href) => {
     if (href === '/') return pathname === '/';
@@ -23,12 +25,15 @@ export default function NavBar() {
 
   return (
     <nav style={{
-      display: 'flex', background: '#08090f',
-      borderTop: '1px solid #1c2035', flexShrink: 0,
+      display: 'flex',
+      background: t.bg,
+      borderTop: `1px solid ${t.border}`,
+      flexShrink: 0,
       paddingBottom: 'max(6px, env(safe-area-inset-bottom))',
+      transition: 'background 0.2s ease, border-color 0.2s ease',
     }}>
       {TABS.map(({ id, href, icon, label }) => {
-        const on = active(href);
+        const on    = active(href);
         const badge = id === 'groups' && grpBadge;
         return (
           <Link
@@ -40,20 +45,26 @@ export default function NavBar() {
               position: 'relative', WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <span style={{ fontSize: 17, lineHeight: 1 }}>{icon}</span>
-            <span style={{ fontSize: 8, color: on ? '#6366f1' : '#424960', fontWeight: on ? 700 : 400 }}>
+            <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+            <span style={{
+              fontSize: 9,
+              color: on ? '#6366f1' : t.text3,
+              fontWeight: on ? 700 : 400,
+              marginTop: 1,
+            }}>
               {label}
             </span>
             {on && (
               <span style={{
-                display: 'block', width: 14, height: 2, borderRadius: 99,
-                background: '#6366f1', marginTop: 1,
+                display: 'block', width: 18, height: 2.5, borderRadius: 99,
+                background: '#6366f1', marginTop: 2,
               }} />
             )}
             {badge && (
               <span style={{
                 position: 'absolute', top: 5, right: 8, width: 8, height: 8,
-                borderRadius: '50%', background: '#ef4444', border: '1.5px solid #08090f',
+                borderRadius: '50%', background: '#ef4444',
+                border: `1.5px solid ${t.bg}`,
               }} />
             )}
           </Link>

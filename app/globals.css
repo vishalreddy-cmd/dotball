@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Theme tokens ── */
+:root {
+  --bg:        #08090f;
+  --surface:   #111421;
+  --surface2:  #0d0f1a;
+  --border:    #1c2035;
+  --text:      #eef0ff;
+  --text2:     #7a85a0;
+  --text3:     #424960;
+  --accent:    #6366f1;
+}
+:root[data-theme="light"] {
+  --bg:        #f0f2ff;
+  --surface:   #ffffff;
+  --surface2:  #e8eaff;
+  --border:    #dde0f5;
+  --text:      #0f1123;
+  --text2:     #5b6785;
+  --text3:     #9ca3af;
+  --accent:    #6366f1;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
@@ -14,9 +36,10 @@ html, body {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #08090f;
-  color: #eef0ff;
+  background: var(--bg);
+  color: var(--text);
   overscroll-behavior: none;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 #__next, main {
