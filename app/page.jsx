@@ -96,7 +96,7 @@ function JoinChallengeBanner({ pinnedMatch }) {
         <input
           value={code}
           onChange={e => setCode(e.target.value.toUpperCase())}
-          placeholder="e.g. GOOGLY"
+          placeholder=""
           maxLength={12}
           style={{
             flex: 1, padding: '10px 12px', borderRadius: 9,
@@ -208,6 +208,7 @@ const SCORING_ROWS = [
 
 export default function HomePage() {
   const { t } = useTheme();
+  const { challenges } = useAuth();
   const [schedule,     setSchedule]     = useState(() => buildSchedule());
   const [pastOpen,     setPastOpen]     = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(false);
@@ -236,19 +237,19 @@ export default function HomePage() {
       {/* Join challenge banner */}
       <JoinChallengeBanner pinnedMatch={pinnedMatch} />
 
-      {/* Live match banner */}
-      {live.length > 0 && (
-        <div style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 12, border: '1px solid rgba(99,102,241,.4)', background: 'linear-gradient(150deg,#0d0f1a,#111421)' }}>
+      {/* Live match banner — only if user has a challenge for this match */}
+      {live.length > 0 && challenges.some(ch => ch.matchId === live[0].id) && (
+        <div style={{ borderRadius: 14, overflow: 'hidden', marginBottom: 12, border: `1px solid ${t.border}`, background: t.surface }}>
           <div style={{ background: 'linear-gradient(90deg,#6366f1,#8b5cf6)', padding: '6px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>How am I doing? <span style={{ opacity: .7, fontWeight: 400 }}>Tap to see</span></span>
             <span style={{ fontSize: 10, fontWeight: 700, color: '#c7d2fe' }}>Live now</span>
           </div>
           <div style={{ padding: '12px 14px' }}>
-            <div style={{ fontSize: 10, color: '#7a85a0', marginBottom: 5, textAlign: 'center' }}>Match in progress</div>
-            <div style={{ height: 4, borderRadius: 99, background: '#1c2035', overflow: 'hidden' }}>
+            <div style={{ fontSize: 10, color: t.text2, marginBottom: 5, textAlign: 'center' }}>Match in progress</div>
+            <div style={{ height: 4, borderRadius: 99, background: t.surface2, overflow: 'hidden' }}>
               <div style={{ height: 4, borderRadius: 99, background: 'linear-gradient(90deg,#6366f1,#06b6d4)', width: '60%' }} />
             </div>
-            <div style={{ fontSize: 9, color: '#7a85a0', marginTop: 5, textAlign: 'center' }}>Tap to see your squad points</div>
+            <div style={{ fontSize: 9, color: t.text2, marginTop: 5, textAlign: 'center' }}>Tap to see your squad points</div>
           </div>
         </div>
       )}
