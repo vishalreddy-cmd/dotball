@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useSquad } from '@/lib/useSquad';
 import { autoPick } from '@/lib/autoPick';
 import { CR, ROLE_COLORS } from '@/lib/credits';
@@ -21,8 +21,10 @@ const T = data.teams;
 const SQ = data.squads;
 
 export default function XIPage() {
-  const { matchId } = useParams();
-  const router = useRouter();
+  const { matchId }  = useParams();
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+  const cid          = searchParams.get('cid'); // challenge lobby to return to
   const { user, profile, challenges } = useAuth();
   const toast = useToast();
 
@@ -64,6 +66,14 @@ export default function XIPage() {
       }).catch(() => {});
     }
   }, [user, match, matchId, loadSquad]);
+
+  /* Mark 'marinating' in challenge lobby when coming from one */
+  useEffect(() => {
+    if (!cid || !user) return;
+    updateDoc(doc(db, 'challenges', cid), {
+      [`memberStatus.${user.uid}`]: 'marinating',
+    }).catch(() => {});
+  }, [cid, user?.uid]);
 
   /* Load ownership % — how many pickers selected each player */
   useEffect(() => {
@@ -191,6 +201,7 @@ export default function XIPage() {
       }
 
       toast('Squad saved to dotball!');
+      if (cid) { router.push(`/challenge/${cid}`); return; }
     } catch (e) {
       toast(e.code === 'permission-denied' ? 'Firebase rules need updating — check console' : `Save failed: ${e.message}`, false);
     }

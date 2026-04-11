@@ -1,8 +1,135 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import MatchCard from '@/components/MatchCard';
 import PreMatchSheet from '@/components/PreMatchSheet';
-import { buildSchedule } from '@/lib/schedule';
+import { buildSchedule, parseMatchUTC, isMatchLocked } from '@/lib/schedule';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
+
+const fmtDocId = (code, fmt) => `${fmt}_${code}`;
+
+function fmtSecs(s) {
+  const m = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+function JoinChallengeBanner({ pinnedMatch }) {
+  const { user, profile, challenges, setChallenges } = useAuth();
+  const toast   = useToast();
+  const router  = useRouter();
+  const [code,  setCode]  = useState('');
+  const [busy,  setBusy]  = useState(false);
+  const [secs,  setSecs]  = useState(null);
+
+  const locked = pinnedMatch && isMatchLocked(pinnedMatch);
+
+  // Tick countdown when within 180 s of match start
+  useEffect(() => {
+    if (!pinnedMatch || locked) return;
+    const matchUTC = parseMatchUTC(pinnedMatch.date, pinnedMatch.time);
+    function tick() {
+      const s = Math.floor((matchUTC - Date.now()) / 1000);
+      setSecs(s >= 0 ? s : 0);
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [pinnedMatch?.id, locked]);
+
+  async function join() {
+    const c = code.trim().toUpperCase();
+    if (c.length < 4) { toast('Enter a valid challenge code', false); return; }
+    if (!user)        { toast('Please sign in first', false); return; }
+    setBusy(true);
+    try {
+      const ids = [fmtDocId(c, 'xi'), fmtDocId(c, 'r3')];
+      let found = null;
+      for (const fid of ids) {
+        if (challenges.some(ch => ch.id === fid)) {
+          router.push(`/challenge/${fid}`); setBusy(false); return;
+        }
+        const snap = await getDoc(doc(db, 'challenges', fid));
+        if (snap.exists()) { found = { id: fid, ...snap.data() }; break; }
+      }
+      if (!found) { toast('Challenge not found — check the code', false); setBusy(false); return; }
+      await updateDoc(doc(db, 'challenges', found.id), {
+        members:     arrayUnion(user.uid),
+        memberNames: arrayUnion(profile?.name || 'Player'),
+        [`memberStatus.${user.uid}`]: 'pending',
+      });
+      setChallenges(prev => [...prev, { ...found, own: false }]);
+      toast('Joined! Pick your squad now');
+      router.push(`/challenge/${found.id}`);
+    } catch (e) { toast(`Failed: ${e.message}`, false); }
+    setBusy(false);
+  }
+
+  const showTimer = secs !== null && secs <= 180 && secs > 0 && !locked;
+
+  return (
+    <div style={{ marginTop: 12, marginBottom: 12 }}>
+      {/* Locked / started banner */}
+      {locked ? (
+        <div style={{ padding: '11px 14px', borderRadius: 14, background: '#ef444412', border: '1px solid #ef444433', textAlign: 'center' }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#ef4444' }}>
+            Match has started — cannot join a challenge!
+          </span>
+        </div>
+      ) : (
+        <div style={{ padding: '11px 12px', background: '#111421', borderRadius: 14, border: '1px solid #1c2035' }}>
+          {/* Title row */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 9 }}>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#eef0ff' }}>Join a challenge</div>
+              <div style={{ fontSize: 10, color: '#7a85a0', marginTop: 1 }}>Enter the code your friend shared</div>
+            </div>
+            {/* Countdown pill */}
+            {showTimer && (
+              <div style={{ padding: '4px 10px', borderRadius: 99, background: '#fb923c18', border: '1px solid #fb923c44', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ fontSize: 9, color: '#fb923c', fontWeight: 700 }}>Locks in</span>
+                <span style={{ fontSize: 13, fontWeight: 900, color: '#fb923c', fontVariantNumeric: 'tabular-nums' }}>{fmtSecs(secs)}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Code input + button */}
+          <div style={{ display: 'flex', gap: 7 }}>
+            <input
+              value={code}
+              onChange={e => setCode(e.target.value.toUpperCase())}
+              placeholder="e.g. GOOGLY"
+              maxLength={12}
+              style={{
+                flex: 1, padding: '10px 12px', borderRadius: 9,
+                border: '1px solid #1c2035', background: '#0d0f1a',
+                color: '#f5a623', fontSize: 16, fontWeight: 800,
+                letterSpacing: 4, textAlign: 'center', outline: 'none',
+                fontFamily: 'Georgia, serif',
+              }}
+            />
+            <button
+              onClick={join}
+              disabled={busy || code.length < 4}
+              style={{
+                padding: '10px 16px', borderRadius: 9, border: 'none',
+                background: code.length >= 4 ? '#6366f1' : '#1e293b',
+                color: code.length >= 4 ? '#fff' : '#475569',
+                fontWeight: 700, fontSize: 12, cursor: code.length >= 4 ? 'pointer' : 'default',
+                opacity: busy ? 0.6 : 1, flexShrink: 0,
+              }}
+            >
+              {busy ? '...' : 'Join'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ScoringGuide() {
   const [open, setOpen] = useState(false);
@@ -77,11 +204,10 @@ const SCORING_ROWS = [
 ];
 
 export default function HomePage() {
-  const [schedule,    setSchedule]    = useState(() => buildSchedule());
-  const [pastOpen,    setPastOpen]    = useState(false);
-  const [upcomingOpen,setUpcomingOpen]= useState(false);
-  const [notif,       setNotif]       = useState(true);
-  const [preMatch,    setPreMatch]    = useState(null);
+  const [schedule,     setSchedule]     = useState(() => buildSchedule());
+  const [pastOpen,     setPastOpen]     = useState(false);
+  const [upcomingOpen, setUpcomingOpen] = useState(false);
+  const [preMatch,     setPreMatch]     = useState(null);
 
   useEffect(() => {
     const id = setInterval(() => setSchedule(buildSchedule()), 60_000);
@@ -93,29 +219,18 @@ export default function HomePage() {
   const next   = schedule.filter(m => m.status === 'next');
   const future = schedule.filter(m => m.status === 'future');
 
-  // Always pin the very next upcoming match; rest go in the collapsible
   const pinnedMatch = live[0] || next[0] || future[0] || null;
   const collapsible = (() => {
-    if (live.length > 0)       return [...next, ...future];
-    if (next.length > 0)       return future;
+    if (live.length > 0)  return [...next, ...future];
+    if (next.length > 0)  return future;
     return future.slice(1);
   })();
 
   return (
     <div style={{ padding: '0 14px' }}>
 
-      {/* Notification banner */}
-      {notif && (
-        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 12, marginBottom: 12, padding: '11px 12px', background: '#111421', borderRadius: 14, border: '1px solid #1c2035' }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, flexShrink: 0 }}>🔔</div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#eef0ff', marginBottom: 2 }}>dotball</div>
-            <div style={{ fontSize: 11, color: '#7a85a0', lineHeight: 1.45 }}>Playing XI announced. Your winning team ready?</div>
-            <div style={{ fontSize: 9, color: '#424960', marginTop: 3 }}>Preview of the notification you'll receive</div>
-          </div>
-          <button onClick={() => setNotif(false)} style={{ background: 'transparent', border: 'none', color: '#424960', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: 0 }}>×</button>
-        </div>
-      )}
+      {/* Join challenge banner */}
+      <JoinChallengeBanner pinnedMatch={pinnedMatch} />
 
       {/* Live match banner */}
       {live.length > 0 && (
@@ -154,7 +269,7 @@ export default function HomePage() {
         </>
       )}
 
-      {/* Pinned next match — always visible */}
+      {/* Pinned next match */}
       {pinnedMatch && (
         <>
           <div style={{ fontSize: 10, fontWeight: 600, color: live.length > 0 ? '#6366f1' : '#f5a623', marginBottom: 7, marginTop: 4 }}>
@@ -181,10 +296,8 @@ export default function HomePage() {
         </>
       )}
 
-      {/* Scoring rules — collapsible */}
       <ScoringGuide />
 
-      {/* Pre-match analysis sheet */}
       {preMatch && <PreMatchSheet match={preMatch} onClose={() => setPreMatch(null)} />}
     </div>
   );
