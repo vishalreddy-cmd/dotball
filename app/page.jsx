@@ -5,6 +5,7 @@ import MatchCard from '@/components/MatchCard';
 import PreMatchSheet from '@/components/PreMatchSheet';
 import { buildSchedule, parseMatchUTC, isMatchLocked } from '@/lib/schedule';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
@@ -19,6 +20,7 @@ function fmtSecs(s) {
 
 function JoinChallengeBanner({ pinnedMatch }) {
   const { user, profile, challenges, setChallenges } = useAuth();
+  const { t }   = useTheme();
   const toast   = useToast();
   const router  = useRouter();
   const [code,  setCode]  = useState('');
@@ -44,6 +46,7 @@ function JoinChallengeBanner({ pinnedMatch }) {
     const c = code.trim().toUpperCase();
     if (c.length < 4) { toast('Enter a valid challenge code', false); return; }
     if (!user)        { toast('Please sign in first', false); return; }
+    if (locked)       { toast('Match has started — new challenges are closed', false); return; }
     setBusy(true);
     try {
       const ids = [fmtDocId(c, 'xi'), fmtDocId(c, 'r3')];
@@ -69,62 +72,61 @@ function JoinChallengeBanner({ pinnedMatch }) {
   }
 
   const showTimer = secs !== null && secs <= 180 && secs > 0 && !locked;
+  const canJoin   = code.length >= 4;
 
   return (
-    <div style={{ marginTop: 12, marginBottom: 12 }}>
-      {/* Locked / started banner */}
-      {locked ? (
-        <div style={{ padding: '11px 14px', borderRadius: 14, background: '#ef444412', border: '1px solid #ef444433', textAlign: 'center' }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#ef4444' }}>
-            Match has started — cannot join a challenge!
-          </span>
+    <div style={{ marginTop: 12, marginBottom: 12, padding: '11px 12px', background: t.surface, borderRadius: 14, border: `1px solid ${t.border}` }}>
+      {/* Title row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 9 }}>
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: t.text }}>Have a code? Join here</div>
+          <div style={{ fontSize: 10, color: t.text2, marginTop: 1 }}>Enter the code your friend shared</div>
         </div>
-      ) : (
-        <div style={{ padding: '11px 12px', background: '#111421', borderRadius: 14, border: '1px solid #1c2035' }}>
-          {/* Title row */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 9 }}>
-            <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#eef0ff' }}>Join a challenge</div>
-              <div style={{ fontSize: 10, color: '#7a85a0', marginTop: 1 }}>Enter the code your friend shared</div>
-            </div>
-            {/* Countdown pill */}
-            {showTimer && (
-              <div style={{ padding: '4px 10px', borderRadius: 99, background: '#fb923c18', border: '1px solid #fb923c44', display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ fontSize: 9, color: '#fb923c', fontWeight: 700 }}>Locks in</span>
-                <span style={{ fontSize: 13, fontWeight: 900, color: '#fb923c', fontVariantNumeric: 'tabular-nums' }}>{fmtSecs(secs)}</span>
-              </div>
-            )}
+        {/* Countdown pill when < 3 min */}
+        {showTimer && (
+          <div style={{ padding: '4px 10px', borderRadius: 99, background: '#fb923c18', border: '1px solid #fb923c44', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 9, color: '#fb923c', fontWeight: 700 }}>Locks in</span>
+            <span style={{ fontSize: 13, fontWeight: 900, color: '#fb923c', fontVariantNumeric: 'tabular-nums' }}>{fmtSecs(secs)}</span>
           </div>
+        )}
+      </div>
 
-          {/* Code input + button */}
-          <div style={{ display: 'flex', gap: 7 }}>
-            <input
-              value={code}
-              onChange={e => setCode(e.target.value.toUpperCase())}
-              placeholder="e.g. GOOGLY"
-              maxLength={12}
-              style={{
-                flex: 1, padding: '10px 12px', borderRadius: 9,
-                border: '1px solid #1c2035', background: '#0d0f1a',
-                color: '#f5a623', fontSize: 16, fontWeight: 800,
-                letterSpacing: 4, textAlign: 'center', outline: 'none',
-                fontFamily: 'Georgia, serif',
-              }}
-            />
-            <button
-              onClick={join}
-              disabled={busy || code.length < 4}
-              style={{
-                padding: '10px 16px', borderRadius: 9, border: 'none',
-                background: code.length >= 4 ? '#6366f1' : '#1e293b',
-                color: code.length >= 4 ? '#fff' : '#475569',
-                fontWeight: 700, fontSize: 12, cursor: code.length >= 4 ? 'pointer' : 'default',
-                opacity: busy ? 0.6 : 1, flexShrink: 0,
-              }}
-            >
-              {busy ? '...' : 'Join'}
-            </button>
-          </div>
+      {/* Code input + button */}
+      <div style={{ display: 'flex', gap: 7 }}>
+        <input
+          value={code}
+          onChange={e => setCode(e.target.value.toUpperCase())}
+          placeholder="e.g. GOOGLY"
+          maxLength={12}
+          style={{
+            flex: 1, padding: '10px 12px', borderRadius: 9,
+            border: `1px solid ${t.border}`, background: t.surface2,
+            color: '#f5a623', fontSize: 16, fontWeight: 800,
+            letterSpacing: 4, textAlign: 'center', outline: 'none',
+            fontFamily: 'Georgia, serif',
+          }}
+        />
+        <button
+          onClick={join}
+          disabled={busy || !canJoin}
+          style={{
+            padding: '10px 16px', borderRadius: 9, border: 'none',
+            background: canJoin ? '#6366f1' : t.surface2,
+            color: canJoin ? '#fff' : t.text3,
+            fontWeight: 700, fontSize: 12,
+            cursor: canJoin ? 'pointer' : 'default',
+            opacity: busy ? 0.6 : 1, flexShrink: 0,
+            border: `1px solid ${canJoin ? 'transparent' : t.border}`,
+          }}
+        >
+          {busy ? '...' : 'Join'}
+        </button>
+      </div>
+
+      {/* Subtle note when match is live */}
+      {locked && (
+        <div style={{ fontSize: 9, color: '#ef4444', marginTop: 7, textAlign: 'center' }}>
+          Match in progress — new joins are closed, but you can still view existing challenges
         </div>
       )}
     </div>
@@ -132,26 +134,27 @@ function JoinChallengeBanner({ pinnedMatch }) {
 }
 
 function ScoringGuide() {
+  const { t } = useTheme();
   const [open, setOpen] = useState(false);
   return (
     <div style={{ marginTop: 18, marginBottom: 20 }}>
       <button
         onClick={() => setOpen(o => !o)}
-        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid #1c2035', background: '#111421', cursor: 'pointer' }}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: `1px solid ${t.border}`, background: t.surface, cursor: 'pointer' }}
       >
-        <span style={{ fontSize: 11, fontWeight: 600, color: '#7a85a0' }}>How scoring works</span>
-        <span style={{ color: '#424960' }}>{open ? '▲' : '▼'}</span>
+        <span style={{ fontSize: 11, fontWeight: 600, color: t.text2 }}>How scoring works</span>
+        <span style={{ color: t.text3 }}>{open ? '▲' : '▼'}</span>
       </button>
       {open && (
-        <div style={{ background: '#0d0f1a', borderRadius: '0 0 10px 10px', border: '1px solid #1c2035', borderTop: 'none', padding: '10px 12px' }}>
+        <div style={{ background: t.surface2, borderRadius: '0 0 10px 10px', border: `1px solid ${t.border}`, borderTop: 'none', padding: '10px 12px' }}>
           {SCORING_ROWS.map((row, i) =>
             row.section ? (
               <div key={i} style={{ fontSize: 9, fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: 1, marginTop: i === 0 ? 0 : 10, marginBottom: 4 }}>
                 {row.section}
               </div>
             ) : (
-              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 4, borderBottom: '1px solid #1c203522', marginBottom: 4 }}>
-                <span style={{ fontSize: 10, color: '#7a85a0' }}>{row.label}</span>
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: 4, borderBottom: `1px solid ${t.border}44`, marginBottom: 4 }}>
+                <span style={{ fontSize: 10, color: t.text2 }}>{row.label}</span>
                 <span style={{ fontSize: 10, fontWeight: 700, color: row.pts.startsWith('-') ? '#f87171' : row.pts.startsWith('+') ? '#22c55e' : '#f5a623' }}>{row.pts}</span>
               </div>
             )
@@ -204,6 +207,7 @@ const SCORING_ROWS = [
 ];
 
 export default function HomePage() {
+  const { t } = useTheme();
   const [schedule,     setSchedule]     = useState(() => buildSchedule());
   const [pastOpen,     setPastOpen]     = useState(false);
   const [upcomingOpen, setUpcomingOpen] = useState(false);
@@ -249,20 +253,20 @@ export default function HomePage() {
         </div>
       )}
 
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#eef0ff', marginBottom: 2 }}>IPL 2026</div>
-      <div style={{ fontSize: 11, color: '#7a85a0', marginBottom: 13 }}>Pick a match</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: t.text, marginBottom: 2 }}>IPL 2026</div>
+      <div style={{ fontSize: 11, color: t.text2, marginBottom: 13 }}>Pick a match</div>
 
       {/* Past matches — collapsible */}
       {past.length > 0 && (
         <>
           <button
             onClick={() => setPastOpen(o => !o)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: '1px solid #42496033', background: '#42496008', cursor: 'pointer', marginBottom: 9 }}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', borderRadius: 10, border: `1px solid ${t.border}`, background: t.surface, cursor: 'pointer', marginBottom: 9 }}
           >
-            <span style={{ fontSize: 11, fontWeight: 600, color: '#424960' }}>Past matches</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: t.text3 }}>Past matches</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 9, color: '#424960aa', background: '#42496018', padding: '2px 8px', borderRadius: 99 }}>{past.length} matches</span>
-              <span style={{ color: '#424960' }}>{pastOpen ? '▲' : '▼'}</span>
+              <span style={{ fontSize: 9, color: t.text3, background: t.surface2, padding: '2px 8px', borderRadius: 99 }}>{past.length} matches</span>
+              <span style={{ color: t.text3 }}>{pastOpen ? '▲' : '▼'}</span>
             </div>
           </button>
           {pastOpen && past.map(m => <MatchCard key={m.id} match={m} dim />)}
