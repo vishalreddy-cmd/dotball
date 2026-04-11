@@ -81,10 +81,10 @@ export default function Shell({ children }) {
               position: 'relative',
               width: 48, height: 26,
               borderRadius: 99,
-              border: 'none',
-              background: theme === 'dark' ? '#1c2035' : '#d4c9b8',
+              border: theme === 'dark' ? '1px solid #252a40' : '1px solid #b8ad9e',
+              background: theme === 'dark' ? '#1c2035' : '#c8bfb0',
               cursor: 'pointer', flexShrink: 0, padding: 0,
-              transition: 'background 0.25s ease',
+              transition: 'background 0.25s ease, border-color 0.25s ease',
             }}
           >
             {/* sliding knob */}
