@@ -35,14 +35,14 @@ export default function Onboarding() {
 
   return (
     <div style={{
-      height: '100vh', background: '#181818', display: 'flex', flexDirection: 'column',
+      height: '100vh', background: '#08090f', display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center', padding: '28px 24px', textAlign: 'center',
     }}>
       <div style={{ fontSize: 64, lineHeight: 1, marginBottom: 22 }}>{slide.icon}</div>
-      <div style={{ fontSize: 23, fontWeight: 700, color: '#e8e6e0', marginBottom: 12, lineHeight: 1.2 }}>
+      <div style={{ fontSize: 23, fontWeight: 700, color: '#eef0ff', marginBottom: 12, lineHeight: 1.2 }}>
         {slide.title}
       </div>
-      <div style={{ fontSize: 14, color: '#9a9590', marginBottom: 30, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
+      <div style={{ fontSize: 14, color: '#7a85a0', marginBottom: 30, lineHeight: 1.85, whiteSpace: 'pre-line' }}>
         {slide.body}
       </div>
 
@@ -51,7 +51,7 @@ export default function Onboarding() {
         {SLIDES.map((_, i) => (
           <div key={i} style={{
             height: 4, borderRadius: 99,
-            background: i === step ? '#6366f1' : '#383838',
+            background: i === step ? '#6366f1' : '#1c2035',
             width: i === step ? 28 : 10,
             transition: 'all .3s',
           }} />
@@ -71,7 +71,7 @@ export default function Onboarding() {
       {step < 2 && (
         <button
           onClick={finishOnboarding}
-          style={{ marginTop: 13, background: 'transparent', border: 'none', color: '#5e5a56', fontSize: 12, cursor: 'pointer' }}
+          style={{ marginTop: 13, background: 'transparent', border: 'none', color: '#424960', fontSize: 12, cursor: 'pointer' }}
         >
           Skip
         </button>

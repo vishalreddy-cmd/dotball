@@ -4,14 +4,14 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const ThemeCtx = createContext({ theme: 'dark', toggle: () => {}, t: {} });
 
 export const DARK = {
-  bg:        '#181818',
-  surface:   '#222222',
-  surface2:  '#2a2a2a',
-  border:    '#383838',
-  border2:   '#444444',
-  text:      '#e8e6e0',
-  text2:     '#9a9590',
-  text3:     '#5e5a56',
+  bg:        '#08090f',
+  surface:   '#111421',
+  surface2:  '#0d0f1a',
+  border:    '#1c2035',
+  border2:   '#252a40',
+  text:      '#eef0ff',
+  text2:     '#7a85a0',
+  text3:     '#424960',
   accent:    '#6366f1',
   accentBg:  '#6366f118',
   accentText:'#818cf8',

@@ -122,14 +122,14 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
             💰 Place a wager
           </button>
         ) : (
-          <div style={{ background: '#222222', border: '1px solid #f59e0b33', borderRadius: 12, padding: 12, marginTop: 4 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#e8e6e0', marginBottom: 8 }}>Propose a wager</div>
+          <div style={{ background: '#111421', border: '1px solid #f59e0b33', borderRadius: 12, padding: 12, marginTop: 4 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#eef0ff', marginBottom: 8 }}>Propose a wager</div>
 
             {/* Currency */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
               {['INR', 'USD'].map(c => (
                 <button key={c} onClick={() => { setCurrency(c); setAmount(''); }}
-                  style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: currency === c ? '#f59e0b' : '#2a2a2a', color: currency === c ? '#000' : '#9a9590' }}>
+                  style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: currency === c ? '#f59e0b' : '#0d0f1a', color: currency === c ? '#000' : '#7a85a0' }}>
                   {c === 'INR' ? '₹ INR' : '$ USD'}
                 </button>
               ))}
@@ -140,11 +140,11 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
               type="number" value={amount} onChange={e => setAmount(e.target.value)}
               placeholder={`Amount (max ${currency === 'INR' ? '₹10,000' : '$100'})`}
               min={1} max={maxAmt}
-              style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1px solid #383838', background: '#2a2a2a', color: '#f5a623', fontSize: 13, fontWeight: 700, boxSizing: 'border-box', outline: 'none', marginBottom: 8, fontFamily: 'inherit' }}
+              style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1px solid #1c2035', background: '#0d0f1a', color: '#f5a623', fontSize: 13, fontWeight: 700, boxSizing: 'border-box', outline: 'none', marginBottom: 8, fontFamily: 'inherit' }}
             />
 
             {/* Disclaimer */}
-            <div style={{ fontSize: 9, color: '#5e5a56', marginBottom: 8, lineHeight: 1.5 }}>{DISCLAIMER}</div>
+            <div style={{ fontSize: 9, color: '#424960', marginBottom: 8, lineHeight: 1.5 }}>{DISCLAIMER}</div>
 
             <div style={{ display: 'flex', gap: 6 }}>
               <button onClick={propose} disabled={busy || !amount || parseInt(amount) < 1 || parseInt(amount) > maxAmt}
@@ -152,7 +152,7 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
                 {busy ? '...' : 'Propose wager'}
               </button>
               <button onClick={() => { setMode(null); setAmount(''); }}
-                style={{ flex: 1, padding: 10, borderRadius: 9, border: '1px solid #383838', background: 'transparent', color: '#9a9590', fontSize: 11, cursor: 'pointer' }}>
+                style={{ flex: 1, padding: 10, borderRadius: 9, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', fontSize: 11, cursor: 'pointer' }}>
                 Cancel
               </button>
             </div>
@@ -180,39 +180,39 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
           </span>
         </div>
         <span style={{ fontSize: 9, padding: '2px 7px', borderRadius: 99, fontWeight: 700,
-          background: matchNoResult ? '#383838' : isSettled ? '#14532d' : isOpen ? '#f59e0b18' : '#383838',
-          color: matchNoResult ? '#9a9590' : isSettled ? '#86efac' : isOpen ? '#f5a623' : '#9a9590' }}>
+          background: matchNoResult ? '#1c2035' : isSettled ? '#14532d' : isOpen ? '#f59e0b18' : '#1c2035',
+          color: matchNoResult ? '#7a85a0' : isSettled ? '#86efac' : isOpen ? '#f5a623' : '#7a85a0' }}>
           {matchNoResult ? '🌧 Void' : isSettled ? 'Settled' : isOpen && matchLocked ? 'Locked' : 'Open'}
         </span>
       </div>
 
       {/* Effective stake + pool */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <div style={{ flex: 1, background: '#222222', borderRadius: 8, padding: '6px 10px', textAlign: 'center' }}>
+        <div style={{ flex: 1, background: '#111421', borderRadius: 8, padding: '6px 10px', textAlign: 'center' }}>
           <div style={{ fontSize: 15, fontWeight: 900, color: '#f5a623' }}>{sym}{effectiveAmt?.toLocaleString()}</div>
-          <div style={{ fontSize: 8, color: '#5e5a56' }}>stake each</div>
+          <div style={{ fontSize: 8, color: '#424960' }}>stake each</div>
         </div>
-        <div style={{ flex: 1, background: '#222222', borderRadius: 8, padding: '6px 10px', textAlign: 'center' }}>
+        <div style={{ flex: 1, background: '#111421', borderRadius: 8, padding: '6px 10px', textAlign: 'center' }}>
           <div style={{ fontSize: 15, fontWeight: 900, color: '#22c55e' }}>{sym}{totalPool.toLocaleString()}</div>
-          <div style={{ fontSize: 8, color: '#5e5a56' }}>total pool</div>
+          <div style={{ fontSize: 8, color: '#424960' }}>total pool</div>
         </div>
-        <div style={{ flex: 1, background: '#222222', borderRadius: 8, padding: '6px 10px', textAlign: 'center' }}>
+        <div style={{ flex: 1, background: '#111421', borderRadius: 8, padding: '6px 10px', textAlign: 'center' }}>
           <div style={{ fontSize: 15, fontWeight: 900, color: '#a78bfa' }}>{wager.participants.length}</div>
-          <div style={{ fontSize: 8, color: '#5e5a56' }}>in wager</div>
+          <div style={{ fontSize: 8, color: '#424960' }}>in wager</div>
         </div>
       </div>
 
       {/* Prize breakdown */}
       {wager.participants.length >= 2 && (
-        <div style={{ background: '#222222', borderRadius: 8, padding: '6px 10px', marginBottom: 8 }}>
-          <div style={{ fontSize: 9, color: '#9a9590', marginBottom: 4 }}>Prize breakdown</div>
+        <div style={{ background: '#111421', borderRadius: 8, padding: '6px 10px', marginBottom: 8 }}>
+          <div style={{ fontSize: 9, color: '#7a85a0', marginBottom: 4 }}>Prize breakdown</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10 }}>
             <span style={{ color: '#f5a623' }}>1st place</span>
             <span style={{ color: '#f5a623', fontWeight: 700 }}>{sym}{(totalPool - effectiveAmt).toLocaleString()} profit</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginTop: 2 }}>
-            <span style={{ color: '#9a9590' }}>2nd place</span>
-            <span style={{ color: '#9a9590' }}>stake back (break even)</span>
+            <span style={{ color: '#7a85a0' }}>2nd place</span>
+            <span style={{ color: '#7a85a0' }}>stake back (break even)</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginTop: 2 }}>
             <span style={{ color: '#f87171' }}>3rd+</span>
@@ -230,13 +230,13 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
           const isMe = p.uid === myUid;
           const isLow = p.stake === effectiveAmt;
           return (
-            <div key={p.uid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #38383844' }}>
+            <div key={p.uid} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '4px 0', borderBottom: '1px solid #1c203544' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ fontSize: 10, color: isMe ? '#a5b4fc' : '#e8e6e0', fontWeight: isMe ? 700 : 400 }}>
+                <span style={{ fontSize: 10, color: isMe ? '#a5b4fc' : '#eef0ff', fontWeight: isMe ? 700 : 400 }}>
                   {p.name}{isMe ? ' (you)' : ''}
                 </span>
                 {p.stake > effectiveAmt && (
-                  <span style={{ fontSize: 8, color: '#9a9590' }}>offered {sym}{p.stake.toLocaleString()} → plays {sym}{effectiveAmt?.toLocaleString()}</span>
+                  <span style={{ fontSize: 8, color: '#7a85a0' }}>offered {sym}{p.stake.toLocaleString()} → plays {sym}{effectiveAmt?.toLocaleString()}</span>
                 )}
               </div>
               <span style={{ fontSize: 10, fontWeight: 700, color: '#22c55e' }}>✓ in</span>
@@ -255,23 +255,23 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
 
       {canAccept && mode === 'accept' && (
         <div style={{ marginTop: 4 }}>
-          <div style={{ fontSize: 10, color: '#9a9590', marginBottom: 6 }}>
+          <div style={{ fontSize: 10, color: '#7a85a0', marginBottom: 6 }}>
             Enter your stake — lowest stake among all participants becomes the playing amount.
           </div>
           <input
             type="number" value={amount} onChange={e => setAmount(e.target.value)}
             placeholder={`Your stake (max ${wager.currency === 'INR' ? '₹10,000' : '$100'})`}
             min={1} max={wager.currency === 'INR' ? MAX_INR : MAX_USD}
-            style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1px solid #383838', background: '#2a2a2a', color: '#22c55e', fontSize: 13, fontWeight: 700, boxSizing: 'border-box', outline: 'none', marginBottom: 6, fontFamily: 'inherit' }}
+            style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1px solid #1c2035', background: '#0d0f1a', color: '#22c55e', fontSize: 13, fontWeight: 700, boxSizing: 'border-box', outline: 'none', marginBottom: 6, fontFamily: 'inherit' }}
           />
-          <div style={{ fontSize: 9, color: '#5e5a56', marginBottom: 8 }}>{DISCLAIMER}</div>
+          <div style={{ fontSize: 9, color: '#424960', marginBottom: 8 }}>{DISCLAIMER}</div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={accept} disabled={busy || !amount || parseInt(amount) < 1}
               style={{ flex: 2, padding: 9, borderRadius: 8, border: 'none', background: '#22c55e', color: '#000', fontWeight: 700, fontSize: 11, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>
               {busy ? '...' : 'Confirm'}
             </button>
             <button onClick={() => { setMode(null); setAmount(''); }}
-              style={{ flex: 1, padding: 9, borderRadius: 8, border: '1px solid #383838', background: 'transparent', color: '#9a9590', fontSize: 11, cursor: 'pointer' }}>
+              style={{ flex: 1, padding: 9, borderRadius: 8, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', fontSize: 11, cursor: 'pointer' }}>
               Cancel
             </button>
           </div>
@@ -280,7 +280,7 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
 
       {/* No result — wager void */}
       {matchNoResult && (
-        <div style={{ textAlign: 'center', padding: '8px 0', fontSize: 10, color: '#9a9590', borderTop: '1px solid #383838', marginTop: 6 }}>
+        <div style={{ textAlign: 'center', padding: '8px 0', fontSize: 10, color: '#7a85a0', borderTop: '1px solid #1c2035', marginTop: 6 }}>
           🌧 Match abandoned — wager is void. No money changes hands.
         </div>
       )}
@@ -302,11 +302,11 @@ export default function WagerCard({ challenge, matchId, myUid, myName, matchLock
 
       {/* Disclaimer toggle */}
       <button onClick={() => setShowDiscl(o => !o)}
-        style={{ background: 'transparent', border: 'none', color: '#5e5a56', fontSize: 8, cursor: 'pointer', marginTop: 4, padding: 0 }}>
+        style={{ background: 'transparent', border: 'none', color: '#424960', fontSize: 8, cursor: 'pointer', marginTop: 4, padding: 0 }}>
         {showDiscl ? '▲ hide disclaimer' : 'ⓘ disclaimer'}
       </button>
       {showDiscl && (
-        <div style={{ fontSize: 8, color: '#5e5a56', lineHeight: 1.5, marginTop: 4 }}>{DISCLAIMER}</div>
+        <div style={{ fontSize: 8, color: '#424960', lineHeight: 1.5, marginTop: 4 }}>{DISCLAIMER}</div>
       )}
     </div>
   );

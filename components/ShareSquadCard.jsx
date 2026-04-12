@@ -75,10 +75,10 @@ export default function ShareSquadCard({ match, players, C, VC, IP1, IP2, onClos
       onClick={onClose}>
       <div
         className="sheet-enter"
-        style={{ width: '100%', maxWidth: 430, background: '#222222', borderRadius: '20px 20px 0 0', border: '1px solid #383838', paddingBottom: 'max(32px, calc(18px + env(safe-area-inset-bottom))', maxHeight: '92vh', overflowY: 'auto' }}
+        style={{ width: '100%', maxWidth: 430, background: '#111421', borderRadius: '20px 20px 0 0', border: '1px solid #1c2035', paddingBottom: 'max(32px, calc(18px + env(safe-area-inset-bottom))', maxHeight: '92vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ width: 36, height: 4, borderRadius: 2, background: '#383838', margin: '12px auto 16px' }} />
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: '#1c2035', margin: '12px auto 16px' }} />
 
         {/* Visual card preview */}
         <div
@@ -86,7 +86,7 @@ export default function ShareSquadCard({ match, players, C, VC, IP1, IP2, onClos
           style={{
             margin: '0 16px 16px',
             borderRadius: 16,
-            background: 'linear-gradient(135deg,#0c1040 0%,#222222 50%,#0d1a00 100%)',
+            background: 'linear-gradient(135deg,#0c1040 0%,#111421 50%,#0d1a00 100%)',
             border: '1px solid #6366f144',
             overflow: 'hidden',
           }}
@@ -103,13 +103,13 @@ export default function ShareSquadCard({ match, players, C, VC, IP1, IP2, onClos
               <div key={team} style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8 }}>
                   <TeamLogo team={team} size={16} />
-                  <span style={{ fontSize: 10, fontWeight: 700, color: T[team]?.bg || '#e8e6e0' }}>{team}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: T[team]?.bg || '#eef0ff' }}>{team}</span>
                 </div>
                 {ps.map(p => {
                   const b = badge(p);
                   return (
-                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 0', borderBottom: '1px solid #383838' }}>
-                      <span style={{ fontSize: 10, fontWeight: 600, color: '#e8e6e0', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.n.split(' ').pop()}</span>
+                    <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 0', borderBottom: '1px solid #1c2035' }}>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: '#eef0ff', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.n.split(' ').pop()}</span>
                       {b && <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: b.bg, color: b.tc, fontWeight: 800, flexShrink: 0 }}>{b.label}</span>}
                     </div>
                   );
@@ -119,8 +119,8 @@ export default function ShareSquadCard({ match, players, C, VC, IP1, IP2, onClos
           </div>
 
           {/* Footer */}
-          <div style={{ background: '#2a2a2a', padding: '6px 16px', textAlign: 'center' }}>
-            <span style={{ fontSize: 9, color: '#5e5a56' }}>Made with dotball · No money, just cricket knowledge</span>
+          <div style={{ background: '#0d0f1a', padding: '6px 16px', textAlign: 'center' }}>
+            <span style={{ fontSize: 9, color: '#424960' }}>Made with dotball · No money, just cricket knowledge</span>
           </div>
         </div>
 
@@ -135,13 +135,13 @@ export default function ShareSquadCard({ match, players, C, VC, IP1, IP2, onClos
           </button>
           <button
             onClick={copyText}
-            style={{ width: '100%', padding: 12, borderRadius: 12, border: '1px solid #383838', background: 'transparent', color: copied ? '#22c55e' : '#9a9590', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}
+            style={{ width: '100%', padding: 12, borderRadius: 12, border: '1px solid #1c2035', background: 'transparent', color: copied ? '#22c55e' : '#7a85a0', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}
           >
             {copied ? '✓ Copied to clipboard' : 'Copy squad list'}
           </button>
           <button
             onClick={onClose}
-            style={{ width: '100%', padding: 10, borderRadius: 12, border: 'none', background: 'transparent', color: '#5e5a56', fontSize: 12, cursor: 'pointer', marginBottom: 4 }}
+            style={{ width: '100%', padding: 10, borderRadius: 12, border: 'none', background: 'transparent', color: '#424960', fontSize: 12, cursor: 'pointer', marginBottom: 4 }}
           >
             Close
           </button>

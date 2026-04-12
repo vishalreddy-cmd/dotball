@@ -73,9 +73,9 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
         {players.map(p => {
           const rc = ROLE_COLORS[p.r] || '#818cf8';
           return (
-            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 10px', borderRadius: 9, background: '#222222', border: `1px solid ${rc}22`, marginBottom: 4 }}>
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 10px', borderRadius: 9, background: '#111421', border: `1px solid ${rc}22`, marginBottom: 4 }}>
               <TeamLogo team={p.team} size={22} />
-              <div style={{ flex: 1, fontSize: 11, fontWeight: 600, color: '#e8e6e0' }}>{p.n}</div>
+              <div style={{ flex: 1, fontSize: 11, fontWeight: 600, color: '#eef0ff' }}>{p.n}</div>
               {captainId === p.id && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: '#f59e0b', color: '#000', fontWeight: 800 }}>C</span>}
               {vcId === p.id      && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: '#818cf8', color: '#fff', fontWeight: 800 }}>VC</span>}
               {ip1Id === p.id     && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: '#34d399', color: '#000', fontWeight: 800 }}>IP1</span>}
@@ -83,7 +83,7 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
             </div>
           );
         })}
-        <div style={{ textAlign: 'center', padding: '12px 0', fontSize: 10, color: '#5e5a56' }}>
+        <div style={{ textAlign: 'center', padding: '12px 0', fontSize: 10, color: '#424960' }}>
           Live stats appear here once the match starts
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
       {/* Live scoreboard */}
       {(live || complete || score.length > 0) && (
         <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 12 }}>
-          <div style={{ background: live ? 'linear-gradient(90deg,#6366f1,#8b5cf6)' : '#383838', padding: '6px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: live ? 'linear-gradient(90deg,#6366f1,#8b5cf6)' : '#1c2035', padding: '6px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 10, fontWeight: 700, color: '#fff' }}>
               {live ? '🔴 Live' : noResult ? '🌧 No Result' : '✅ Final'}
             </span>
@@ -103,21 +103,21 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
             {noResult && <span style={{ fontSize: 9, color: '#c7d2fe' }}>Match abandoned</span>}
           </div>
           {score.length > 0 && (
-            <div style={{ background: '#2a2a2a', padding: '10px 14px', display: 'flex', gap: 8 }}>
+            <div style={{ background: '#0d0f1a', padding: '10px 14px', display: 'flex', gap: 8 }}>
               {score.map((s, i) => (
                 <div key={i} style={{ flex: 1, textAlign: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 3 }}>
                     <TeamLogo team={i === 0 ? match.t1 : match.t2} size={16} />
-                    <span style={{ fontSize: 9, color: '#9a9590' }}>{i === 0 ? match.t1 : match.t2}</span>
+                    <span style={{ fontSize: 9, color: '#7a85a0' }}>{i === 0 ? match.t1 : match.t2}</span>
                   </div>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: '#e8e6e0' }}>{s.r}/{s.w}</div>
-                  <div style={{ fontSize: 8, color: '#5e5a56' }}>{s.o} ov</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: '#eef0ff' }}>{s.r}/{s.w}</div>
+                  <div style={{ fontSize: 8, color: '#424960' }}>{s.o} ov</div>
                 </div>
               ))}
             </div>
           )}
           {status && (
-            <div style={{ background: '#222222', padding: '5px 14px', fontSize: 9, color: '#22c55e', textAlign: 'center' }}>
+            <div style={{ background: '#111421', padding: '5px 14px', fontSize: 9, color: '#22c55e', textAlign: 'center' }}>
               {status}
             </div>
           )}
@@ -129,7 +129,7 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
         <div style={{ borderRadius: 12, padding: '10px 14px', background: '#0c1040', border: '1px solid #6366f133', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#a5b4fc' }}>My squad points</div>
-            <div style={{ fontSize: 9, color: '#5e5a56', marginTop: 1 }}>
+            <div style={{ fontSize: 9, color: '#424960', marginTop: 1 }}>
               {live ? 'Updates in real time' : 'Final score'}
             </div>
           </div>
@@ -155,14 +155,14 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
           <div key={p.id} style={{
             display: 'flex', alignItems: 'center', gap: 7,
             padding: '7px 10px', borderRadius: 10, marginBottom: 5,
-            background: s ? '#222222' : '#2a2a2a',
-            border: `1px solid ${s ? '#383838' : '#2a2a2a'}`,
+            background: s ? '#111421' : '#0d0f1a',
+            border: `1px solid ${s ? '#1c2035' : '#0d0f1a'}`,
             opacity: s ? 1 : 0.4,
           }}>
             <TeamLogo team={p.team} size={22} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#e8e6e0' }}>{p.n}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#eef0ff' }}>{p.n}</span>
                 {isC   && <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: '#f59e0b', color: '#000', fontWeight: 800 }}>C×2</span>}
                 {isVC  && <span style={{ fontSize: 7, padding: '1px 4px', borderRadius: 3, background: '#818cf8', color: '#fff', fontWeight: 800 }}>VC×1.5</span>}
                 {(isIP1 || isIP2) && realImpactSubs.includes(p.id) && (
@@ -180,7 +180,7 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
                 {s ? (
                   <>
                     {s.runs  !== undefined && <StatPill label="runs" value={s.runs}  color="#60a5fa" />}
-                    {s.balls !== undefined && <StatPill label="b"    value={s.balls} color="#9a9590" />}
+                    {s.balls !== undefined && <StatPill label="b"    value={s.balls} color="#7a85a0" />}
                     {s.fours > 0           && <StatPill label="4s"   value={s.fours} color="#34d399" />}
                     {s.sixes > 0           && <StatPill label="6s"   value={s.sixes} color="#f59e0b" />}
                     {s.wickets > 0         && <StatPill label="wkts" value={s.wickets} color="#f87171" />}
@@ -188,18 +188,18 @@ export default function LiveSquadScore({ matchId, players, captainId, vcId, ip1I
                     {s.economy > 0         && <StatPill label="eco"  value={s.economy?.toFixed(1)} color="#a78bfa" />}
                   </>
                 ) : (
-                  <span style={{ fontSize: 8, color: '#5e5a56' }}>Yet to bat / bowl</span>
+                  <span style={{ fontSize: 8, color: '#424960' }}>Yet to bat / bowl</span>
                 )}
               </div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0, minWidth: 32 }}>
               {s ? (
                 <>
-                  <div style={{ fontSize: 16, fontWeight: 900, color: pts > 0 ? '#22c55e' : '#9a9590' }}>{pts}</div>
-                  <div style={{ fontSize: 8, color: '#5e5a56' }}>pts</div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: pts > 0 ? '#22c55e' : '#7a85a0' }}>{pts}</div>
+                  <div style={{ fontSize: 8, color: '#424960' }}>pts</div>
                 </>
               ) : (
-                <div style={{ fontSize: 13, color: '#383838' }}>—</div>
+                <div style={{ fontSize: 13, color: '#1c2035' }}>—</div>
               )}
             </div>
           </div>

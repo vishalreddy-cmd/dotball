@@ -92,7 +92,7 @@ export default function ProfilePage() {
               ? <img src={avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
               : <span style={{ fontSize: 26, fontWeight: 900, color: '#fff' }}>{initials}</span>}
           </div>
-          <label htmlFor="av-up" style={{ position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '2px solid #181818', fontSize: 11 }}>
+          <label htmlFor="av-up" style={{ position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: '50%', background: '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '2px solid #08090f', fontSize: 11 }}>
             ✎
           </label>
           <input id="av-up" type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarChange} />
@@ -102,19 +102,19 @@ export default function ProfilePage() {
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', marginBottom: 4 }}>
             <input
               value={newName} onChange={e => setNewName(e.target.value)}
-              style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #6366f1', background: '#2a2a2a', color: '#e8e6e0', fontSize: 14, fontWeight: 700, outline: 'none', fontFamily: 'inherit', maxWidth: 160 }}
+              style={{ padding: '6px 10px', borderRadius: 8, border: '1px solid #6366f1', background: '#0d0f1a', color: '#eef0ff', fontSize: 14, fontWeight: 700, outline: 'none', fontFamily: 'inherit', maxWidth: 160 }}
               autoFocus
             />
             <button onClick={saveName} style={{ padding: '6px 12px', borderRadius: 8, border: 'none', background: '#6366f1', color: '#fff', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>Save</button>
-            <button onClick={() => { setEditing(false); setNewName(profile?.name || ''); }} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #383838', background: 'transparent', color: '#9a9590', fontSize: 11, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={() => { setEditing(false); setNewName(profile?.name || ''); }} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', fontSize: 11, cursor: 'pointer' }}>Cancel</button>
           </div>
         ) : (
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#e8e6e0' }}>{profile?.name || '—'}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: '#eef0ff' }}>{profile?.name || '—'}</div>
         )}
 
-        <div style={{ fontSize: 11, color: '#9a9590', marginTop: 2 }}>dotball · IPL 2026</div>
+        <div style={{ fontSize: 11, color: '#7a85a0', marginTop: 2 }}>dotball · IPL 2026</div>
         {!editing && (
-          <button onClick={() => setEditing(true)} style={{ marginTop: 8, padding: '5px 14px', borderRadius: 99, border: '1px solid #383838', background: 'transparent', color: '#9a9590', fontSize: 10, cursor: 'pointer' }}>
+          <button onClick={() => setEditing(true)} style={{ marginTop: 8, padding: '5px 14px', borderRadius: 99, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', fontSize: 10, cursor: 'pointer' }}>
             Edit display name
           </button>
         )}
@@ -123,10 +123,10 @@ export default function ProfilePage() {
       {/* Stats grid */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 7, marginBottom: 16 }}>
         {statItems.map(([icon, key, val]) => (
-          <div key={key} style={{ padding: '10px 8px', borderRadius: 11, background: '#222222', border: '1px solid #383838', textAlign: 'center' }}>
+          <div key={key} style={{ padding: '10px 8px', borderRadius: 11, background: '#111421', border: '1px solid #1c2035', textAlign: 'center' }}>
             <div style={{ fontSize: 16, marginBottom: 3 }}>{icon}</div>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#e8e6e0' }}>{val}</div>
-            <div style={{ fontSize: 8, color: '#5e5a56', marginTop: 2, lineHeight: 1.3 }}>{key}</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#eef0ff' }}>{val}</div>
+            <div style={{ fontSize: 8, color: '#424960', marginTop: 2, lineHeight: 1.3 }}>{key}</div>
           </div>
         ))}
       </div>
@@ -134,14 +134,14 @@ export default function ProfilePage() {
       {/* Badges earned */}
       {badges.length > 0 && (
         <>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#e8e6e0', marginBottom: 8 }}>Badges earned</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#eef0ff', marginBottom: 8 }}>Badges earned</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
             {badges.map(b => (
               <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 99, background: `${b.color}18`, border: `1px solid ${b.color}44` }}>
                 <span style={{ fontSize: 14 }}>{b.icon}</span>
                 <div>
                   <div style={{ fontSize: 10, fontWeight: 700, color: b.color }}>{b.label}</div>
-                  <div style={{ fontSize: 8, color: '#9a9590' }}>{b.desc}</div>
+                  <div style={{ fontSize: 8, color: '#7a85a0' }}>{b.desc}</div>
                 </div>
               </div>
             ))}
@@ -152,14 +152,14 @@ export default function ProfilePage() {
       {/* Locked badges */}
       {lockedBadges.length > 0 && (
         <>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#5e5a56', marginBottom: 8 }}>Locked badges</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#424960', marginBottom: 8 }}>Locked badges</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
             {lockedBadges.map(b => (
-              <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 99, background: '#222222', border: '1px solid #383838', opacity: 0.5 }}>
+              <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', borderRadius: 99, background: '#111421', border: '1px solid #1c2035', opacity: 0.5 }}>
                 <span style={{ fontSize: 14, filter: 'grayscale(1)' }}>{b.icon}</span>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: '#5e5a56' }}>{b.label}</div>
-                  <div style={{ fontSize: 8, color: '#5e5a56' }}>{b.desc}</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: '#424960' }}>{b.label}</div>
+                  <div style={{ fontSize: 8, color: '#424960' }}>{b.desc}</div>
                 </div>
               </div>
             ))}

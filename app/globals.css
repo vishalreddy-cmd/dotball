@@ -4,13 +4,13 @@
 
 /* ── Theme tokens ── */
 :root {
-  --bg:        #181818;
-  --surface:   #222222;
-  --surface2:  #2a2a2a;
-  --border:    #383838;
-  --text:      #e8e6e0;
-  --text2:     #9a9590;
-  --text3:     #5e5a56;
+  --bg:        #08090f;
+  --surface:   #111421;
+  --surface2:  #0d0f1a;
+  --border:    #1c2035;
+  --text:      #eef0ff;
+  --text2:     #7a85a0;
+  --text3:     #424960;
   --accent:    #6366f1;
 }
 :root[data-theme="light"] {

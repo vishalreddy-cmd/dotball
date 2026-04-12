@@ -10,8 +10,8 @@ export default function RoleAssigner({ players, C, VC, IP1, IP2, onC, onVC, onIP
 
   return (
     <div style={{ padding: '12px 12px 0' }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#e8e6e0', marginBottom: 2 }}>Assign roles</div>
-      <div style={{ fontSize: 11, color: '#9a9590', marginBottom: 6 }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#eef0ff', marginBottom: 2 }}>Assign roles</div>
+      <div style={{ fontSize: 11, color: '#7a85a0', marginBottom: 6 }}>
         C = 2× · VC = 1.5× · IP1 &amp; IP2 = predict impact sub (×1.25 if correct)
       </div>
 
@@ -31,11 +31,11 @@ export default function RoleAssigner({ players, C, VC, IP1, IP2, onC, onVC, onIP
         const isOverseas = p.c && p.c !== 'IN';
         const ipBlocked = ipMustBeIndian && isOverseas && !isIP1 && !isIP2;
         return (
-          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', borderRadius: 11, background: '#222222', border: `1px solid ${ipInvalid(p) ? '#ef444444' : '#383838'}`, marginBottom: 6 }}>
+          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', borderRadius: 11, background: '#111421', border: `1px solid ${ipInvalid(p) ? '#ef444444' : '#1c2035'}`, marginBottom: 6 }}>
             <TeamLogo team={p.team} size={26} />
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: '#e8e6e0' }}>{p.n}</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#eef0ff' }}>{p.n}</span>
                 {isOverseas && <span style={{ fontSize: 8, padding: '1px 4px', borderRadius: 4, background: '#7c3aed22', color: '#a78bfa', border: '1px solid #7c3aed33' }}>{p.c}</span>}
               </div>
               <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 99, background: `${roleColor}18`, color: roleColor, border: `1px solid ${roleColor}30` }}>{p.r}</span>
@@ -43,15 +43,15 @@ export default function RoleAssigner({ players, C, VC, IP1, IP2, onC, onVC, onIP
             </div>
             <button
               onClick={() => onC(p.id)}
-              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 9, background: isC ? '#f59e0b' : '#383838', color: isC ? '#000' : '#5e5a56' }}
+              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 9, background: isC ? '#f59e0b' : '#1c2035', color: isC ? '#000' : '#424960' }}
             >C</button>
             <button
               onClick={() => onVC(p.id)}
-              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 9, background: isVC ? '#818cf8' : '#383838', color: isVC ? '#fff' : '#5e5a56' }}
+              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 9, background: isVC ? '#818cf8' : '#1c2035', color: isVC ? '#fff' : '#424960' }}
             >VC</button>
             <button
               onClick={() => !ipBlocked && onIP(p.id)}
-              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: ipBlocked ? 'not-allowed' : 'pointer', fontWeight: 800, fontSize: 8, background: isIP1 || isIP2 ? '#34d399' : ipBlocked ? '#2a2a2a' : '#383838', color: isIP1 || isIP2 ? '#000' : ipBlocked ? '#383838' : '#5e5a56', opacity: ipBlocked ? 0.4 : 1 }}
+              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: ipBlocked ? 'not-allowed' : 'pointer', fontWeight: 800, fontSize: 8, background: isIP1 || isIP2 ? '#34d399' : ipBlocked ? '#0d0f1a' : '#1c2035', color: isIP1 || isIP2 ? '#000' : ipBlocked ? '#1c2035' : '#424960', opacity: ipBlocked ? 0.4 : 1 }}
             >{isIP1 ? 'IP1' : isIP2 ? 'IP2' : 'IP'}</button>
           </div>
         );
