@@ -5,7 +5,7 @@ const T = data.teams;
 export default function TeamLogo({ team, size = 44 }) {
   const t = T[team];
   if (!t) return (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: '#1c2035', flexShrink: 0 }} />
+    <div style={{ width: size, height: size, borderRadius: '50%', background: '#383838', flexShrink: 0 }} />
   );
   const fs = size <= 22
     ? Math.round(size * 0.34)

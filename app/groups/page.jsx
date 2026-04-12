@@ -36,10 +36,10 @@ function MemberLobby({ challenge, statuses, myUid }) {
   const readyCount = members.filter(uid => memberStatus[uid] === 'ready').length;
 
   return (
-    <div style={{ marginTop: 10, borderRadius: 10, background: '#0d0f1a', border: '1px solid #1c2035', overflow: 'hidden' }}>
+    <div style={{ marginTop: 10, borderRadius: 10, background: '#2a2a2a', border: '1px solid #383838', overflow: 'hidden' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 11px', borderBottom: '1px solid #1c2035' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#7a85a0' }}>Squad status</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 11px', borderBottom: '1px solid #383838' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#9a9590' }}>Squad status</span>
         <span style={{ fontSize: 10, color: readyCount === members.length ? '#22c55e' : '#f59e0b', fontWeight: 700 }}>
           {readyCount}/{members.length} ready
         </span>
@@ -55,21 +55,21 @@ function MemberLobby({ challenge, statuses, myUid }) {
             style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '7px 11px',
-              borderBottom: i < members.length - 1 ? '1px solid #1c203566' : 'none',
+              borderBottom: i < members.length - 1 ? '1px solid #38383866' : 'none',
               background: isMe ? '#6366f108' : 'transparent',
             }}
           >
             {/* Avatar circle */}
             <div style={{
               width: 26, height: 26, borderRadius: '50%',
-              background: isMe ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : '#1c2035',
+              background: isMe ? 'linear-gradient(135deg,#6366f1,#8b5cf6)' : '#383838',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 9, fontWeight: 800, color: isMe ? '#fff' : '#7a85a0', flexShrink: 0,
+              fontSize: 9, fontWeight: 800, color: isMe ? '#fff' : '#9a9590', flexShrink: 0,
             }}>
               {name.substring(0, 2).toUpperCase()}
             </div>
             {/* Name */}
-            <div style={{ flex: 1, fontSize: 11, fontWeight: 600, color: '#eef0ff' }}>
+            <div style={{ flex: 1, fontSize: 11, fontWeight: 600, color: '#e8e6e0' }}>
               {name}{isMe && <span style={{ fontSize: 9, color: '#818cf8', marginLeft: 4 }}>you</span>}
             </div>
             {/* Status */}
@@ -208,8 +208,8 @@ export default function GroupsPage() {
 
   return (
     <div style={{ padding: '12px 12px 0' }}>
-      <div style={{ fontSize: 15, fontWeight: 700, color: '#eef0ff', marginBottom: 3 }}>My challenges</div>
-      <div style={{ fontSize: 11, color: '#7a85a0', marginBottom: activeMatch ? 4 : 16 }}>
+      <div style={{ fontSize: 15, fontWeight: 700, color: '#e8e6e0', marginBottom: 3 }}>My challenges</div>
+      <div style={{ fontSize: 11, color: '#9a9590', marginBottom: activeMatch ? 4 : 16 }}>
         Compete in multiple groups — same squad, picks apply everywhere.
       </div>
 
@@ -223,7 +223,7 @@ export default function GroupsPage() {
       {/* Share panel */}
       {shareInfo && (
         <div style={{ background: 'linear-gradient(135deg,#0c1040,#1a0f30)', border: '1px solid #6366f144', borderRadius: 14, padding: 15, marginBottom: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: '#7a85a0', letterSpacing: 0.5, marginBottom: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: '#9a9590', letterSpacing: 0.5, marginBottom: 10 }}>
             Challenge created! Share this code
           </div>
           <div style={{ textAlign: 'center', marginBottom: 12 }}>
@@ -234,7 +234,7 @@ export default function GroupsPage() {
               {shareInfo.fmt === 'r3' ? 'Top 3' : 'Classic XI'} challenge
             </div>
             {shareInfo.def && (
-              <div style={{ fontSize: 10, color: '#424960', marginTop: 6, fontStyle: 'italic', lineHeight: 1.5 }}>
+              <div style={{ fontSize: 10, color: '#5e5a56', marginTop: 6, fontStyle: 'italic', lineHeight: 1.5 }}>
                 "{shareInfo.def}"
               </div>
             )}
@@ -248,11 +248,11 @@ export default function GroupsPage() {
             </button>
             <button
               onClick={() => copyCode(shareInfo.code)}
-              style={{ width: '100%', padding: 11, borderRadius: 10, border: `1px solid ${copied ? '#22c55e' : '#1c2035'}`, background: copied ? '#14532d18' : 'transparent', color: copied ? '#86efac' : '#7a85a0', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}
+              style={{ width: '100%', padding: 11, borderRadius: 10, border: `1px solid ${copied ? '#22c55e' : '#383838'}`, background: copied ? '#14532d18' : 'transparent', color: copied ? '#86efac' : '#9a9590', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}
             >
               {copied ? '✓ Copied!' : 'Copy code'}
             </button>
-            <button onClick={() => setShareInfo(null)} style={{ background: 'transparent', border: 'none', color: '#424960', fontSize: 11, cursor: 'pointer' }}>
+            <button onClick={() => setShareInfo(null)} style={{ background: 'transparent', border: 'none', color: '#5e5a56', fontSize: 11, cursor: 'pointer' }}>
               Dismiss
             </button>
           </div>
@@ -272,24 +272,24 @@ export default function GroupsPage() {
         const myStatus   = memberStatus[user?.uid];
 
         return (
-          <div key={ch.id} style={{ background: '#111421', border: '1px solid #1c2035', borderRadius: 14, padding: '12px 13px', marginBottom: 9 }}>
+          <div key={ch.id} style={{ background: '#222222', border: '1px solid #383838', borderRadius: 14, padding: '12px 13px', marginBottom: 9 }}>
             {/* Top row */}
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
                 {ch.own ? '👑' : '🤝'}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: '#eef0ff' }}>{ch.name}</div>
-                <div style={{ fontSize: 10, color: '#7a85a0' }}>{ch.fmt === 'xi' ? 'Classic XI' : 'Top 3'} · {total} member{total !== 1 ? 's' : ''}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#e8e6e0' }}>{ch.name}</div>
+                <div style={{ fontSize: 10, color: '#9a9590' }}>{ch.fmt === 'xi' ? 'Classic XI' : 'Top 3'} · {total} member{total !== 1 ? 's' : ''}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 5 }}>
                   <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 4, fontFamily: 'Georgia,serif', color: '#f5a623' }}>{ch.code}</div>
                   <button
                     onClick={() => setDefOpen(defOpen === ch.id ? null : ch.id)}
-                    style={{ width: 18, height: 18, borderRadius: '50%', background: defOpen === ch.id ? '#6366f1' : '#0d0f1a', border: `1px solid ${defOpen === ch.id ? '#6366f1' : '#1c2035'}`, color: defOpen === ch.id ? '#fff' : '#424960', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    style={{ width: 18, height: 18, borderRadius: '50%', background: defOpen === ch.id ? '#6366f1' : '#2a2a2a', border: `1px solid ${defOpen === ch.id ? '#6366f1' : '#383838'}`, color: defOpen === ch.id ? '#fff' : '#5e5a56', fontSize: 11, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   >i</button>
                 </div>
                 {defOpen === ch.id && codeInfo(ch.code) && (
-                  <div style={{ background: '#0d0f1a', border: '1px solid #1c2035', borderRadius: 8, padding: '8px 10px', marginTop: 6, fontSize: 10, color: '#818cf8', lineHeight: 1.5 }}>
+                  <div style={{ background: '#2a2a2a', border: '1px solid #383838', borderRadius: 8, padding: '8px 10px', marginTop: 6, fontSize: 10, color: '#818cf8', lineHeight: 1.5 }}>
                     <strong style={{ color: '#a5b4fc' }}>{ch.code}</strong> — {codeInfo(ch.code).d}
                   </div>
                 )}
@@ -304,8 +304,8 @@ export default function GroupsPage() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 4,
                   padding: '4px 9px', borderRadius: 99,
-                  background: allReady ? '#14532d22' : '#1c2035',
-                  border: `1px solid ${allReady ? '#22c55e44' : '#1c2035'}`,
+                  background: allReady ? '#14532d22' : '#383838',
+                  border: `1px solid ${allReady ? '#22c55e44' : '#383838'}`,
                   cursor: 'pointer',
                 }}
                 onClick={() => setLobbyOpen(isLobbyOpen ? null : ch.id)}
@@ -314,7 +314,7 @@ export default function GroupsPage() {
                 <span style={{ fontSize: 9, color: allReady ? '#22c55e' : readyCount > 0 ? '#f59e0b' : '#ef4444', fontWeight: 700 }}>
                   {readyCount}/{total} squads ready
                 </span>
-                <span style={{ fontSize: 9, color: '#424960' }}>{isLobbyOpen ? '▲' : '▼'}</span>
+                <span style={{ fontSize: 9, color: '#5e5a56' }}>{isLobbyOpen ? '▲' : '▼'}</span>
               </div>
 
               {/* Action buttons */}
@@ -373,9 +373,9 @@ export default function GroupsPage() {
           </div>
         );
       }) : (
-        <div style={{ background: '#111421', border: '1px solid #1c2035', borderRadius: 14, padding: 20, textAlign: 'center', marginBottom: 14 }}>
+        <div style={{ background: '#222222', border: '1px solid #383838', borderRadius: 14, padding: 20, textAlign: 'center', marginBottom: 14 }}>
           <div style={{ fontSize: 28, marginBottom: 8 }}>🤝</div>
-          <div style={{ fontSize: 12, color: '#7a85a0' }}>
+          <div style={{ fontSize: 12, color: '#9a9590' }}>
             {activeMatch
               ? `No challenge yet for ${activeMatch.t1} vs ${activeMatch.t2}. Create one or join a friend's!`
               : "No challenges yet. Create one or join a friend's!"}
@@ -397,48 +397,48 @@ export default function GroupsPage() {
 
       {/* Create form */}
       {mode === 'create' && (
-        <div style={{ background: '#111421', border: '1px solid #1c2035', borderRadius: 14, padding: 15 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#eef0ff', marginBottom: 4 }}>New challenge</div>
+        <div style={{ background: '#222222', border: '1px solid #383838', borderRadius: 14, padding: 15 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#e8e6e0', marginBottom: 4 }}>New challenge</div>
           {activeMatch && (
-            <div style={{ fontSize: 10, color: '#7a85a0', marginBottom: 10 }}>
+            <div style={{ fontSize: 10, color: '#9a9590', marginBottom: 10 }}>
               For <strong style={{ color: '#a5b4fc' }}>{activeMatch.t1} vs {activeMatch.t2}</strong> · {activeMatch.day} {activeMatch.date}
             </div>
           )}
           <input
             value={chName} onChange={e => setChName(e.target.value)}
             placeholder="Name (e.g. Office Mates)"
-            style={{ width: '100%', padding: '10px 11px', borderRadius: 9, border: '1px solid #1c2035', background: '#0d0f1a', color: '#eef0ff', fontSize: 13, boxSizing: 'border-box', outline: 'none', marginBottom: 10, fontFamily: 'inherit' }}
+            style={{ width: '100%', padding: '10px 11px', borderRadius: 9, border: '1px solid #383838', background: '#2a2a2a', color: '#e8e6e0', fontSize: 13, boxSizing: 'border-box', outline: 'none', marginBottom: 10, fontFamily: 'inherit' }}
           />
           <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-            <button onClick={() => setChFmt('xi')} style={{ flex: 1, padding: 9, borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: chFmt === 'xi' ? '#6366f1' : '#0d0f1a', color: chFmt === 'xi' ? '#fff' : '#7a85a0' }}>Classic XI</button>
-            <button onClick={() => setChFmt('r3')} style={{ flex: 1, padding: 9, borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: chFmt === 'r3' ? '#06b6d4' : '#0d0f1a', color: chFmt === 'r3' ? '#fff' : '#7a85a0' }}>Top 3</button>
+            <button onClick={() => setChFmt('xi')} style={{ flex: 1, padding: 9, borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: chFmt === 'xi' ? '#6366f1' : '#2a2a2a', color: chFmt === 'xi' ? '#fff' : '#9a9590' }}>Classic XI</button>
+            <button onClick={() => setChFmt('r3')} style={{ flex: 1, padding: 9, borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 700, background: chFmt === 'r3' ? '#06b6d4' : '#2a2a2a', color: chFmt === 'r3' ? '#fff' : '#9a9590' }}>Top 3</button>
           </div>
           <div style={{ display: 'flex', gap: 7 }}>
             <button onClick={createChallenge} disabled={busy} style={{ flex: 2, padding: 12, borderRadius: 10, border: 'none', background: '#6366f1', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>
               {busy ? 'Creating...' : 'Create & get code'}
             </button>
-            <button onClick={() => setMode(null)} style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={() => setMode(null)} style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid #383838', background: 'transparent', color: '#9a9590', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
           </div>
         </div>
       )}
 
       {/* Join form */}
       {mode === 'join' && (
-        <div style={{ background: '#111421', border: '1px solid #1c2035', borderRadius: 14, padding: 15 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#eef0ff', marginBottom: 4 }}>Enter challenge code</div>
-          <div style={{ fontSize: 11, color: '#7a85a0', marginBottom: 10 }}>Works for both Classic XI and Top 3 challenges</div>
+        <div style={{ background: '#222222', border: '1px solid #383838', borderRadius: 14, padding: 15 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#e8e6e0', marginBottom: 4 }}>Enter challenge code</div>
+          <div style={{ fontSize: 11, color: '#9a9590', marginBottom: 10 }}>Works for both Classic XI and Top 3 challenges</div>
           <input
             value={chCode}
             onChange={e => setChCode(e.target.value.toUpperCase())}
             placeholder="e.g. GOOGLY"
             maxLength={12}
-            style={{ width: '100%', padding: 12, borderRadius: 9, border: '1px solid #1c2035', background: '#0d0f1a', color: '#f5a623', fontSize: 20, fontWeight: 800, letterSpacing: 6, textAlign: 'center', boxSizing: 'border-box', outline: 'none', marginBottom: 10, fontFamily: 'Georgia,serif' }}
+            style={{ width: '100%', padding: 12, borderRadius: 9, border: '1px solid #383838', background: '#2a2a2a', color: '#f5a623', fontSize: 20, fontWeight: 800, letterSpacing: 6, textAlign: 'center', boxSizing: 'border-box', outline: 'none', marginBottom: 10, fontFamily: 'Georgia,serif' }}
           />
           <div style={{ display: 'flex', gap: 7 }}>
             <button onClick={joinChallenge} disabled={busy || chCode.length < 4} style={{ flex: 2, padding: 12, borderRadius: 10, border: 'none', background: chCode.length >= 4 ? '#6366f1' : '#1e293b', color: chCode.length >= 4 ? '#fff' : '#475569', fontWeight: 700, fontSize: 12, cursor: 'pointer', opacity: busy ? 0.6 : 1 }}>
               {busy ? 'Joining...' : 'Join'}
             </button>
-            <button onClick={() => setMode(null)} style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
+            <button onClick={() => setMode(null)} style={{ flex: 1, padding: 12, borderRadius: 10, border: '1px solid #383838', background: 'transparent', color: '#9a9590', fontSize: 12, cursor: 'pointer' }}>Cancel</button>
           </div>
         </div>
       )}

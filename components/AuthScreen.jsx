@@ -80,8 +80,8 @@ export default function AuthScreen() {
   }
 
   const inputStyle = {
-    width: '100%', padding: 13, borderRadius: 11, border: '1px solid #1c2035',
-    background: '#0d0f1a', color: '#eef0ff', fontSize: 14, marginBottom: 10,
+    width: '100%', padding: 13, borderRadius: 11, border: '1px solid #383838',
+    background: '#2a2a2a', color: '#e8e6e0', fontSize: 14, marginBottom: 10,
     boxSizing: 'border-box', outline: 'none', WebkitAppearance: 'none', fontFamily: 'inherit',
   };
   const btnPrimary = {
@@ -98,18 +98,18 @@ export default function AuthScreen() {
     }}>
       {/* Logo */}
       <div style={{ marginBottom: 28, textAlign: 'center' }}>
-        <div style={{ fontSize: 26, fontWeight: 900, color: '#eef0ff', display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'center' }}>
+        <div style={{ fontSize: 26, fontWeight: 900, color: '#e8e6e0', display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'center' }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#6366f1' }} />
           dotball
         </div>
-        <div style={{ fontSize: 9, color: '#424960', letterSpacing: 3, marginTop: 5 }}>IPL 2026 FANTASY</div>
+        <div style={{ fontSize: 9, color: '#5e5a56', letterSpacing: 3, marginTop: 5 }}>IPL 2026 FANTASY</div>
       </div>
 
-      <div style={{ width: '100%', maxWidth: 340, background: '#111421', borderRadius: 18, padding: '24px 20px', border: '1px solid #1c2035' }}>
+      <div style={{ width: '100%', maxWidth: 340, background: '#222222', borderRadius: 18, padding: '24px 20px', border: '1px solid #383838' }}>
         {step === 'reset' ? (
           <>
-            <div style={{ fontSize: 17, fontWeight: 700, color: '#eef0ff', marginBottom: 4 }}>Reset password</div>
-            <div style={{ fontSize: 12, color: '#7a85a0', marginBottom: 18 }}>We'll send a reset link to your email</div>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#e8e6e0', marginBottom: 4 }}>Reset password</div>
+            <div style={{ fontSize: 12, color: '#9a9590', marginBottom: 18 }}>We'll send a reset link to your email</div>
             {error && <div style={{ fontSize: 11, color: '#fca5a5', background: '#450a0a', border: '1px solid #ef444444', padding: '8px 10px', borderRadius: 8, marginBottom: 12 }}>{error}</div>}
             <input style={inputStyle} type="email" placeholder="Email address" value={email} onChange={e => setEmail(e.target.value)} />
             <button style={btnPrimary} onClick={doReset} disabled={loading}>
@@ -121,10 +121,10 @@ export default function AuthScreen() {
           </>
         ) : (
           <>
-            <div style={{ fontSize: 17, fontWeight: 700, color: '#eef0ff', marginBottom: 4 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#e8e6e0', marginBottom: 4 }}>
               {step === 'signup' ? 'Create your account' : 'Welcome back'}
             </div>
-            <div style={{ fontSize: 12, color: '#7a85a0', marginBottom: 18 }}>
+            <div style={{ fontSize: 12, color: '#9a9590', marginBottom: 18 }}>
               {step === 'signup' ? 'Sign up to start playing' : 'Sign in to continue'}
             </div>
             {error && <div style={{ fontSize: 11, color: '#fca5a5', background: '#450a0a', border: '1px solid #ef444444', padding: '8px 10px', borderRadius: 8, marginBottom: 12 }}>{error}</div>}
@@ -157,7 +157,7 @@ export default function AuthScreen() {
                 : (step === 'signup' ? 'Create account' : 'Sign in')}
             </button>
 
-            <div style={{ marginTop: 16, textAlign: 'center', fontSize: 12, color: '#7a85a0' }}>
+            <div style={{ marginTop: 16, textAlign: 'center', fontSize: 12, color: '#9a9590' }}>
               {step === 'signup' ? (
                 <>Already have an account?{' '}
                   <button onClick={() => { setStep('login'); setError(''); }} style={{ background: 'transparent', border: 'none', color: '#818cf8', fontSize: 12, cursor: 'pointer', fontWeight: 600 }}>Sign in</button>

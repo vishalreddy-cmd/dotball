@@ -13,15 +13,15 @@ export default function BottomSheet({ onClose, children }) {
         className="sheet-enter"
         style={{
           width: '100%', maxWidth: 430, margin: '0 auto',
-          background: '#111421', borderRadius: '20px 20px 0 0',
-          border: '1px solid #1c2035',
+          background: '#222222', borderRadius: '20px 20px 0 0',
+          border: '1px solid #383838',
           padding: '6px 18px',
           paddingBottom: 'max(32px, calc(18px + env(safe-area-inset-bottom)))',
           maxHeight: '92vh', overflowY: 'auto',
         }}
         onClick={e => e.stopPropagation()}
       >
-        <div style={{ width: 36, height: 4, borderRadius: 2, background: '#1c2035', margin: '10px auto 14px' }} />
+        <div style={{ width: 36, height: 4, borderRadius: 2, background: '#383838', margin: '10px auto 14px' }} />
         {children}
       </div>
     </div>

@@ -7,16 +7,16 @@ export default function CreditBar({ spent, selCount, roleCounts }) {
   const low = rem < 10;
 
   return (
-    <div style={{ background: '#111421', border: '1px solid #1c2035', borderRadius: 14, padding: '9px 12px', marginBottom: 8 }}>
+    <div style={{ background: '#222222', border: '1px solid #383838', borderRadius: 14, padding: '9px 12px', marginBottom: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontSize: 10, fontWeight: 600, color: '#7a85a0' }}>Credits</span>
+        <span style={{ fontSize: 10, fontWeight: 600, color: '#9a9590' }}>Credits</span>
         <span style={{ fontSize: 11, fontWeight: 700 }}>
           <span style={{ color: low ? '#f87171' : '#22c55e' }}>{spent.toFixed(1)}</span>
-          <span style={{ color: '#424960' }}> / 100</span>
-          <span style={{ fontSize: 9, color: '#424960', marginLeft: 4 }}>({rem.toFixed(1)} left)</span>
+          <span style={{ color: '#5e5a56' }}> / 100</span>
+          <span style={{ fontSize: 9, color: '#5e5a56', marginLeft: 4 }}>({rem.toFixed(1)} left)</span>
         </span>
       </div>
-      <div style={{ height: 5, borderRadius: 99, background: '#1c2035', overflow: 'hidden' }}>
+      <div style={{ height: 5, borderRadius: 99, background: '#383838', overflow: 'hidden' }}>
         <div style={{
           height: 5, borderRadius: 99, width: `${pct}%`,
           transition: 'width .3s',
@@ -33,7 +33,7 @@ export default function CreditBar({ spent, selCount, roleCounts }) {
             </span>
           ))}
         </div>
-        <span style={{ fontSize: 9, color: '#424960' }}>{selCount} / 11</span>
+        <span style={{ fontSize: 9, color: '#5e5a56' }}>{selCount} / 11</span>
       </div>
     </div>
   );

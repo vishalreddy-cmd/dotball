@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e ':*)",
+      "WebFetch(domain:documents.iplt20.com)",
+      "Bash(git add:*)",
+      "Bash(git commit -m ':*)",
+      "WebFetch(domain:www.notionavenue.co)",
+      "WebFetch(domain:matthiasfrank.de)",
+      "WebFetch(domain:blog.karenying.com)",
+      "WebFetch(domain:www.designpieces.com)",
+      "WebFetch(domain:creativebooster.net)",
+      "WebFetch(domain:colorpick.app)",
+      "WebFetch(domain:www.vev.design)",
+      "Bash(xargs sed:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\imvis\\dotball\\app\\challenge"
+    ]
+  }
+}

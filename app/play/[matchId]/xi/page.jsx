@@ -126,7 +126,7 @@ export default function XIPage() {
     }
   }, [matchId, match]);
 
-  if (!match) return <div style={{ padding: 20, color: '#7a85a0' }}>Match not found.</div>;
+  if (!match) return <div style={{ padding: 20, color: '#9a9590' }}>Match not found.</div>;
 
   function buildAllPlayers(m) {
     return [
@@ -223,7 +223,7 @@ export default function XIPage() {
         {!isLiveOrDone && (
           <div style={{ borderRadius: 16, padding: 18, background: 'linear-gradient(135deg,#0c1040,#1a0f30)', border: '1px solid #6366f144', marginBottom: 14, textAlign: 'center' }}>
             <div style={{ fontSize: 38 }}>🎉</div>
-            <div style={{ fontSize: 19, fontWeight: 700, color: '#eef0ff', marginTop: 4 }}>Squad locked!</div>
+            <div style={{ fontSize: 19, fontWeight: 700, color: '#e8e6e0', marginTop: 4 }}>Squad locked!</div>
             <div style={{ fontSize: 11, color: '#22c55e', marginTop: 3 }}>Hidden from everyone until first ball</div>
             <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginTop: 10 }}>
               {[
@@ -233,7 +233,7 @@ export default function XIPage() {
               ].map(x => (
                 <div key={x.l} style={{ background: '#ffffff0a', borderRadius: 9, padding: '6px 12px', textAlign: 'center' }}>
                   <div style={{ fontSize: 13, fontWeight: 800, color: x.c }}>{x.v}</div>
-                  <div style={{ fontSize: 9, color: '#7a85a0' }}>{x.l}</div>
+                  <div style={{ fontSize: 9, color: '#9a9590' }}>{x.l}</div>
                 </div>
               ))}
             </div>
@@ -248,16 +248,16 @@ export default function XIPage() {
             </div>
             {myXIChallenges.map(ch => (
               <div key={ch.id} style={{ fontSize: 10, color: '#86efac', marginTop: 2 }}>
-                · {ch.name} <span style={{ color: '#424960' }}>({ch.members?.length || 1} members)</span>
+                · {ch.name} <span style={{ color: '#5e5a56' }}>({ch.members?.length || 1} members)</span>
               </div>
             ))}
           </div>
         )}
         {!isLiveOrDone && myXIChallenges.length === 0 && (
-          <div style={{ borderRadius: 12, padding: '10px 13px', background: '#0d0f1a', border: '1px solid #6366f133', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ borderRadius: 12, padding: '10px 13px', background: '#2a2a2a', border: '1px solid #6366f133', marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: '#a5b4fc' }}>Not in a challenge yet?</div>
-              <div style={{ fontSize: 10, color: '#7a85a0', marginTop: 2 }}>Create or join one — this XI counts automatically</div>
+              <div style={{ fontSize: 10, color: '#9a9590', marginTop: 2 }}>Create or join one — this XI counts automatically</div>
             </div>
             <button
               onClick={() => router.push('/groups')}
@@ -282,9 +282,9 @@ export default function XIPage() {
         ) : (
           /* Pre-match: plain player list */
           sel.map(p => (
-            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 10px', borderRadius: 9, background: '#111421', border: `1px solid ${T[p.team]?.bg || '#6366f1'}44`, marginBottom: 4 }}>
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 10px', borderRadius: 9, background: '#222222', border: `1px solid ${T[p.team]?.bg || '#6366f1'}44`, marginBottom: 4 }}>
               <TeamLogo team={p.team} size={22} />
-              <div style={{ flex: 1, fontSize: 11, fontWeight: 600, color: '#eef0ff' }}>{p.n}</div>
+              <div style={{ flex: 1, fontSize: 11, fontWeight: 600, color: '#e8e6e0' }}>{p.n}</div>
               {C?.id === p.id   && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: '#f59e0b', color: '#000', fontWeight: 800 }}>C</span>}
               {VC?.id === p.id  && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: '#818cf8', color: '#fff', fontWeight: 800 }}>VC</span>}
               {IP1?.id === p.id && <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 3, background: '#34d399', color: '#000', fontWeight: 800 }}>IP1</span>}
@@ -295,10 +295,10 @@ export default function XIPage() {
         )}
 
         <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <button onClick={editSquad} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', cursor: 'pointer', fontSize: 12 }}>Edit squad</button>
-          <button onClick={() => setShowShare(true)} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', cursor: 'pointer', fontSize: 12 }}>
+          <button onClick={editSquad} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid #383838', background: 'transparent', color: '#9a9590', cursor: 'pointer', fontSize: 12 }}>Edit squad</button>
+          <button onClick={() => setShowShare(true)} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid #383838', background: 'transparent', color: '#9a9590', cursor: 'pointer', fontSize: 12 }}>
             <div>Share squad</div>
-            <div style={{ fontSize: 8, color: '#424960', marginTop: 2 }}>reveals your picks</div>
+            <div style={{ fontSize: 8, color: '#5e5a56', marginTop: 2 }}>reveals your picks</div>
           </button>
         </div>
         <button onClick={handleSave} disabled={saving} style={{ width: '100%', marginTop: 8, marginBottom: 12, padding: 12, borderRadius: 11, border: 'none', background: 'linear-gradient(90deg,#22c55e,#16a34a)', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
@@ -339,22 +339,22 @@ export default function XIPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
           <TeamLogo team={match.t1} size={18} />
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#eef0ff' }}>{match.t1}</span>
-          <span style={{ color: '#424960', fontSize: 9 }}>vs</span>
-          <span style={{ fontSize: 11, fontWeight: 700, color: '#eef0ff' }}>{match.t2}</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#e8e6e0' }}>{match.t1}</span>
+          <span style={{ color: '#5e5a56', fontSize: 9 }}>vs</span>
+          <span style={{ fontSize: 11, fontWeight: 700, color: '#e8e6e0' }}>{match.t2}</span>
           <TeamLogo team={match.t2} size={18} />
         </div>
-        <div style={{ fontSize: 9, color: '#818cf8', background: '#1c2035', padding: '4px 8px', borderRadius: 7 }}>100 cr</div>
+        <div style={{ fontSize: 9, color: '#818cf8', background: '#383838', padding: '4px 8px', borderRadius: 7 }}>100 cr</div>
       </div>
 
       {/* Load saved squad prompt */}
       {savedXI && !copXI && step === 'pick' && sel.length === 0 && (
         <div style={{ borderRadius: 11, padding: '10px 12px', background: '#1c1040', border: '1px solid #6366f144', marginBottom: 10 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#a5b4fc', marginBottom: 3 }}>Load your saved squad?</div>
-          <div style={{ fontSize: 10, color: '#7a85a0', marginBottom: 8 }}>{savedXI.players?.length || 0} players saved — load and tweak.</div>
+          <div style={{ fontSize: 10, color: '#9a9590', marginBottom: 8 }}>{savedXI.players?.length || 0} players saved — load and tweak.</div>
           <div style={{ display: 'flex', gap: 7 }}>
             <button onClick={() => { loadSquad(savedXI, allPlayers); setCopXI(true); }} style={{ flex: 2, padding: 8, borderRadius: 9, border: 'none', background: '#6366f1', color: '#fff', fontWeight: 700, fontSize: 10, cursor: 'pointer' }}>Load squad</button>
-            <button onClick={() => setCopXI(true)} style={{ flex: 1, padding: 8, borderRadius: 9, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', fontSize: 10, cursor: 'pointer' }}>Start fresh</button>
+            <button onClick={() => setCopXI(true)} style={{ flex: 1, padding: 8, borderRadius: 9, border: '1px solid #383838', background: 'transparent', color: '#9a9590', fontSize: 10, cursor: 'pointer' }}>Start fresh</button>
           </div>
         </div>
       )}
@@ -363,7 +363,7 @@ export default function XIPage() {
 
       {/* Overseas counter */}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
-        <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 99, background: overseasInXI >= 4 ? '#7c3aed22' : '#1c2035', color: overseasInXI >= 4 ? '#a78bfa' : '#424960', border: `1px solid ${overseasInXI >= 4 ? '#7c3aed44' : '#1c2035'}` }}>
+        <span style={{ fontSize: 9, padding: '2px 8px', borderRadius: 99, background: overseasInXI >= 4 ? '#7c3aed22' : '#383838', color: overseasInXI >= 4 ? '#a78bfa' : '#5e5a56', border: `1px solid ${overseasInXI >= 4 ? '#7c3aed44' : '#383838'}` }}>
           {overseasInXI}/4 overseas
         </span>
       </div>
@@ -394,7 +394,7 @@ export default function XIPage() {
           <div style={{ fontSize: 10, color: '#22c55e', fontWeight: 600 }}>
             Toss done — Playing XI announced
           </div>
-          <div style={{ display: 'flex', gap: 6, fontSize: 9, color: '#7a85a0' }}>
+          <div style={{ display: 'flex', gap: 6, fontSize: 9, color: '#9a9590' }}>
             <span style={{ color: '#16a34a' }}>● Playing</span>
             <span style={{ color: '#7c3aed' }}>● Impact Sub</span>
             <span style={{ color: '#374151' }}>● Bench</span>
@@ -405,9 +405,9 @@ export default function XIPage() {
       {/* Filters */}
       <div style={{ display: 'flex', gap: 5, marginBottom: 7 }}>
         {['ALL', match.t1, match.t2].map(v => (
-          <button key={v} onClick={() => setTeamFilter(v)} style={{ flex: 1, padding: '5px 3px', borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 600, background: teamFilter === v ? '#6366f1' : '#0d0f1a', color: teamFilter === v ? '#fff' : '#7a85a0' }}>{v}</button>
+          <button key={v} onClick={() => setTeamFilter(v)} style={{ flex: 1, padding: '5px 3px', borderRadius: 9, border: 'none', cursor: 'pointer', fontSize: 10, fontWeight: 600, background: teamFilter === v ? '#6366f1' : '#2a2a2a', color: teamFilter === v ? '#fff' : '#9a9590' }}>{v}</button>
         ))}
-        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} style={{ flex: 1, padding: 5, borderRadius: 9, border: '1px solid #1c2035', background: '#0d0f1a', color: '#7a85a0', fontSize: 10 }}>
+        <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)} style={{ flex: 1, padding: 5, borderRadius: 9, border: '1px solid #383838', background: '#2a2a2a', color: '#9a9590', fontSize: 10 }}>
           {['ALL', 'WK', 'BAT', 'AR', 'BOWL'].map(v => <option key={v} value={v}>{v}</option>)}
         </select>
       </div>
@@ -417,7 +417,7 @@ export default function XIPage() {
         value={query}
         onChange={e => setQuery(e.target.value)}
         placeholder="Search player..."
-        style={{ width: '100%', padding: '8px 10px', borderRadius: 9, border: '1px solid #1c2035', background: '#0d0f1a', color: '#eef0ff', fontSize: 11, outline: 'none', marginBottom: 8, fontFamily: 'inherit' }}
+        style={{ width: '100%', padding: '8px 10px', borderRadius: 9, border: '1px solid #383838', background: '#2a2a2a', color: '#e8e6e0', fontSize: 11, outline: 'none', marginBottom: 8, fontFamily: 'inherit' }}
       />
 
       {/* Player list */}
