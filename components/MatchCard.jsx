@@ -52,8 +52,9 @@ export default function MatchCard({ match, dim = false, onInfo }) {
       cursor: isLive ? 'pointer' : 'default',
     }}>
       {isLive && (
-        <div style={{ background: 'linear-gradient(90deg,#6366f1,#8b5cf6)', padding: '5px 13px', fontSize: 10, fontWeight: 600, color: '#fff' }}>
-          Live now — tap for scorecard
+        <div style={{ background: 'linear-gradient(90deg,#6366f1,#8b5cf6)', padding: '5px 13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: 10, fontWeight: 600, color: '#fff' }}>Live now — tap for scorecard</span>
+          <span style={{ fontSize: 9, fontWeight: 700, color: '#fca5a5', background: '#ef444430', padding: '2px 7px', borderRadius: 99 }}>🔒 Challenge closed</span>
         </div>
       )}
       {dim && res && (
