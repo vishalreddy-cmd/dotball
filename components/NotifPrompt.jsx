@@ -14,7 +14,7 @@ export default function NotifPrompt({ uid }) {
   useEffect(() => {
     if (!uid) return;
     if (typeof window === 'undefined') return;
-    if (Notification?.permission === 'granted' || Notification?.permission === 'denied') return;
+    if (typeof Notification === 'undefined' || Notification.permission === 'granted' || Notification.permission === 'denied') return;
     const dismissed = localStorage.getItem('notifDismissed');
     if (dismissed) return;
     // Show prompt after 3 seconds
