@@ -43,7 +43,7 @@ function XIPageInner() {
 
   const [teamFilter, setTeamFilter] = useState('ALL');
   const [roleFilter, setRoleFilter] = useState('ALL');
-  const [query,      setQuery]      = useState('');
+  const [search,     setSearch]     = useState('');
   const [savedXI,    setSavedXI]    = useState(null);
   const [copXI,      setCopXI]      = useState(false);
   const [saving,     setSaving]     = useState(false);
@@ -144,7 +144,7 @@ function XIPageInner() {
   const filtered   = allPlayers.filter(p =>
     (teamFilter === 'ALL' || p.team === teamFilter) &&
     (roleFilter === 'ALL' || p.r === roleFilter) &&
-    (!query || p.n.toLowerCase().includes(query.toLowerCase()))
+    (!search || p.n.toLowerCase().includes(search.toLowerCase()))
   );
 
   function handleToggle(player) {
@@ -418,8 +418,8 @@ function XIPageInner() {
 
       {/* Search */}
       <input
-        value={query}
-        onChange={e => setQuery(e.target.value)}
+        value={search}
+        onChange={e => setSearch(e.target.value)}
         placeholder="Search player..."
         style={{ width: '100%', padding: '8px 10px', borderRadius: 9, border: '1px solid #1c2035', background: '#0d0f1a', color: '#eef0ff', fontSize: 11, outline: 'none', marginBottom: 8, fontFamily: 'inherit' }}
       />
