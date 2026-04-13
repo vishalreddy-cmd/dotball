@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useSquad } from '@/lib/useSquad';
 import { autoPick } from '@/lib/autoPick';
@@ -21,6 +21,10 @@ const T = data.teams;
 const SQ = data.squads;
 
 export default function XIPage() {
+  return <Suspense fallback={null}><XIPageInner /></Suspense>;
+}
+
+function XIPageInner() {
   const { matchId }  = useParams();
   const router       = useRouter();
   const searchParams = useSearchParams();
