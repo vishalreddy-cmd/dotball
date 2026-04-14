@@ -390,7 +390,7 @@ function XIPageInner() {
             <div
               key={p.id}
               onClick={() => remove(p.id)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 7, fontSize: 10, fontWeight: 600, cursor: 'pointer', background: `${T[p.team]?.bg || '#6366f1'}22`, border: `1px solid ${T[p.team]?.bg || '#6366f1'}55`, color: T[p.team]?.bg || '#6366f1' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 3, padding: '2px 7px', borderRadius: 7, fontSize: 10, fontWeight: 700, cursor: 'pointer', background: `${T[p.team]?.bg || '#6366f1'}22`, border: `1.5px solid ${T[p.team]?.bg || '#6366f1'}88`, color: '#eef0ff' }}
             >
               {p.n.split(' ')[0]} <span style={{ opacity: 0.6 }}>×</span>
             </div>
