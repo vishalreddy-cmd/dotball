@@ -4,11 +4,11 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useSquad } from '@/lib/useSquad';
 import { autoPick } from '@/lib/autoPick';
 import { CR, ROLE_COLORS } from '@/lib/credits';
-import { buildSchedule, isMatchLocked } from '@/lib/schedule';
+import { buildSchedule, isMatchLocked, parseMatchUTC } from '@/lib/schedule';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/firebase';
-import { doc, setDoc, updateDoc, getDoc, getDocs, collection, query, where, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, getDoc, getDocs, collection, query, where, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import PlayerCard from '@/components/PlayerCard';
 import CreditBar from '@/components/CreditBar';
 import RoleAssigner from '@/components/RoleAssigner';
@@ -108,27 +108,32 @@ function XIPageInner() {
     loadOwnership();
   }, [matchId]);
 
-  /* Poll playing XI lineup — starts 1h before match, refreshes every 60s */
+  /* Subscribe to liveCache for real-time lineup updates (squad announcement) */
   useEffect(() => {
     if (!match) return;
-    const matchTime = new Date(match.date).getTime();
-    const now = Date.now();
-    const oneHour = 60 * 60 * 1000;
-    // Only poll if within 1 hour of start or already live/past
-    if (match.status === 'upcoming' && matchTime - now > oneHour) return;
+    // Only subscribe if match is within 2h of start, live, or past
+    const matchUTC = parseMatchUTC(match.date, match.time);
+    const twoHours = 2 * 60 * 60 * 1000;
+    if (match.status === 'future' && (matchUTC - Date.now()) > twoHours) return;
 
+    // Real-time: get lineup the instant it's written by the API or cron
+    const unsub = onSnapshot(doc(db, 'liveCache', matchId), snap => {
+      if (!snap.exists()) return;
+      const data = snap.data();
+      if (data.lineup) setLineup(data.lineup);
+      else if (data.payload?.lineup) setLineup(data.payload.lineup);
+    });
+
+    // Also trigger a fresh API fetch every 60s so liveCache stays current
     const fetchLineup = () =>
       fetch(`/api/match-info?matchId=${matchId}`)
         .then(r => r.json())
-        .then(d => { if (d.lineup) setLineup(d.lineup); })
         .catch(() => {});
-
     fetchLineup();
-    if (match.status === 'live') {
-      const id = setInterval(fetchLineup, 60_000);
-      return () => clearInterval(id);
-    }
-  }, [matchId, match]);
+    const id = setInterval(fetchLineup, 60_000);
+
+    return () => { unsub(); clearInterval(id); };
+  }, [matchId, match?.status]);
 
   if (!match) return <div style={{ padding: 20, color: '#7a85a0' }}>Match not found.</div>;
 

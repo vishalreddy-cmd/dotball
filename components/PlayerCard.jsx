@@ -5,16 +5,6 @@ import data from '@/data/squads.json';
 
 const T = data.teams;
 
-function FormTag({ form }) {
-  if (form === 'hot') return (
-    <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 99, background: '#ef444418', color: '#f87171', border: '1px solid #ef444430', marginLeft: 4 }}>🔥</span>
-  );
-  if (form === 'warn') return (
-    <span style={{ fontSize: 8, padding: '1px 5px', borderRadius: 99, background: '#f59e0b18', color: '#fbbf24', border: '1px solid #f59e0b30', marginLeft: 4 }}>⚠</span>
-  );
-  return null;
-}
-
 const STATUS_BADGE = {
   playing: { label: 'Playing', bg: '#16a34a', color: '#fff' },
   impact:  { label: 'Impact Sub', bg: '#7c3aed', color: '#fff' },
@@ -44,7 +34,6 @@ export default function PlayerCard({ player, selected, disabled, onToggle, owner
         <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: '#eef0ff' }}>{player.n}</span>
           {player.c !== 'IN' && <span style={{ fontSize: 9, color: '#424960', marginLeft: 3 }}>[{player.c}]</span>}
-          <FormTag form={player.form} />
           {playingStatus && (() => {
             const b = STATUS_BADGE[playingStatus];
             return b ? (
