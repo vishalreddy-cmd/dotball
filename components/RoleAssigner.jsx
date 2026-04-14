@@ -39,7 +39,11 @@ export default function RoleAssigner({ players, C, VC, IP1, IP2, onC, onVC, onIP
         const isIP1 = IP1?.id === p.id;
         const isIP2 = IP2?.id === p.id;
         const isOverseas = p.c && p.c !== 'IN';
-        const ipBlocked = ipMustBeIndian && isOverseas && !isIP1 && !isIP2;
+        const isIP = isIP1 || isIP2;
+        // C/VC blocked if player is already an IP
+        const cvBlocked = isIP && !isC && !isVC;
+        // IP blocked if player is C or VC, or overseas rule applies
+        const ipBlocked = ((isC || isVC) && !isIP) || (ipMustBeIndian && isOverseas && !isIP);
         return (
           <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 10px', borderRadius: 11, background: '#111421', border: `1px solid ${ipInvalid(p) ? '#ef444444' : '#1c2035'}`, marginBottom: 6 }}>
             <TeamLogo team={p.team} size={26} />
@@ -52,16 +56,16 @@ export default function RoleAssigner({ players, C, VC, IP1, IP2, onC, onVC, onIP
               {ipInvalid(p) && <span style={{ fontSize: 8, color: '#ef4444', marginLeft: 4 }}>⚠ must be Indian</span>}
             </div>
             <button
-              onClick={() => onC(p.id)}
-              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 9, background: isC ? '#f59e0b' : '#1c2035', color: isC ? '#000' : '#424960' }}
+              onClick={() => !cvBlocked && onC(p.id)}
+              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: cvBlocked ? 'not-allowed' : 'pointer', fontWeight: 800, fontSize: 9, background: isC ? '#f59e0b' : '#1c2035', color: isC ? '#000' : '#424960', opacity: cvBlocked ? 0.25 : 1 }}
             >C</button>
             <button
-              onClick={() => onVC(p.id)}
-              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: 'pointer', fontWeight: 800, fontSize: 9, background: isVC ? '#818cf8' : '#1c2035', color: isVC ? '#fff' : '#424960' }}
+              onClick={() => !cvBlocked && onVC(p.id)}
+              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: cvBlocked ? 'not-allowed' : 'pointer', fontWeight: 800, fontSize: 9, background: isVC ? '#818cf8' : '#1c2035', color: isVC ? '#fff' : '#424960', opacity: cvBlocked ? 0.25 : 1 }}
             >VC</button>
             <button
               onClick={() => !ipBlocked && onIP(p.id)}
-              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: ipBlocked ? 'not-allowed' : 'pointer', fontWeight: 800, fontSize: 8, background: isIP1 || isIP2 ? '#34d399' : ipBlocked ? '#0d0f1a' : '#1c2035', color: isIP1 || isIP2 ? '#000' : ipBlocked ? '#1c2035' : '#424960', opacity: ipBlocked ? 0.4 : 1 }}
+              style={{ width: 28, height: 28, borderRadius: 7, border: 'none', cursor: ipBlocked ? 'not-allowed' : 'pointer', fontWeight: 800, fontSize: 8, background: isIP ? '#34d399' : '#1c2035', color: isIP ? '#000' : '#424960', opacity: ipBlocked ? 0.25 : 1 }}
             >{isIP1 ? 'IP1' : isIP2 ? 'IP2' : 'IP'}</button>
           </div>
         );
