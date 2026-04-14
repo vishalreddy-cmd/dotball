@@ -336,6 +336,7 @@ function XIPageInner() {
         onVC={id => { setViceCaptain(id, sel); if (C?.id === id) setCaptain(id, sel); }}
         onIP={handleSetIP}
         onLock={lockSquad}
+        onBack={editSquad}
         ipMustBeIndian={ipMustBeIndian}
       />
     );

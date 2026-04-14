@@ -2,7 +2,7 @@
 import TeamLogo from './TeamLogo';
 import { ROLE_COLORS } from '@/lib/credits';
 
-export default function RoleAssigner({ players, C, VC, IP1, IP2, onC, onVC, onIP, onLock, ipMustBeIndian }) {
+export default function RoleAssigner({ players, C, VC, IP1, IP2, onC, onVC, onIP, onLock, onBack, ipMustBeIndian }) {
   const ipInvalid = (p) => ipMustBeIndian && p.c && p.c !== 'IN' && (IP1?.id === p.id || IP2?.id === p.id);
   const hasInvalidIP = players.some(p => ipInvalid(p));
   const ready = !!(C && VC && IP1 && IP2 && !hasInvalidIP);
@@ -10,7 +10,17 @@ export default function RoleAssigner({ players, C, VC, IP1, IP2, onC, onVC, onIP
 
   return (
     <div style={{ padding: '12px 12px 0' }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#eef0ff', marginBottom: 2 }}>Assign roles</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: '#eef0ff' }}>Assign roles</div>
+        {onBack && (
+          <button
+            onClick={onBack}
+            style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid #1c2035', background: 'transparent', color: '#7a85a0', fontSize: 11, cursor: 'pointer' }}
+          >
+            ← Change players
+          </button>
+        )}
+      </div>
       <div style={{ fontSize: 11, color: '#7a85a0', marginBottom: 6 }}>
         C = 2× · VC = 1.5× · IP1 &amp; IP2 = predict impact sub (×1.25 if correct)
       </div>
