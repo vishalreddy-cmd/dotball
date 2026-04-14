@@ -379,7 +379,7 @@ function XIPageInner() {
 
       {/* Auto pick — always visible so user can re-roll at any time */}
       <button onClick={handleAutoPick} style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid #f59e0b44', background: '#f59e0b08', color: '#f5a623', fontWeight: 700, fontSize: 12, cursor: 'pointer', marginBottom: 8 }}>
-        ⚡ {sel.length === 0 ? 'Auto Pick XI' : 'Re-pick XI'} (based on form)
+        ⚡ {sel.length === 0 ? 'Auto Pick XI' : 'Re-pick XI'}
       </button>
 
       {/* Selected chips */}
